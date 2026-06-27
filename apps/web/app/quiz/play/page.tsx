@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { API_BASE_URL } from '@/lib/api';
 
 type Track = {
   id: number;
@@ -91,7 +92,7 @@ function QuizPlayContent() {
 
         const responses = await Promise.all(
           artistIds.map((artistId) =>
-            fetch(`http://localhost:4000/music/artists/${artistId}/tracks`),
+            fetch(`${API_BASE_URL}/music/artists/${artistId}/tracks`),
           ),
         );
 

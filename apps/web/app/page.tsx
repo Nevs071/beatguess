@@ -15,7 +15,7 @@ export default function Home() {
   useEffect(() => {
     async function checkBackend() {
       try {
-        const response = await fetch('http://localhost:4000/health');
+        const response = await fetch(`${API_BASE_URL}/health`);
         const data: HealthResponse = await response.json();
         setBackendStatus(`${data.status} - ${data.app} v${data.version}`);
       } catch {

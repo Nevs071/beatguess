@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation'; 
+import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/lib/api';
 
 type Artist = {
   id: number;
@@ -14,6 +15,7 @@ type Artist = {
 
 export default function CustomMixPage() {
   const router = useRouter();
+
   const [query, setQuery] = useState('');
   const [artists, setArtists] = useState<Artist[]>([]);
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
@@ -31,7 +33,7 @@ export default function CustomMixPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:4000/music/artists/search?q=${encodeURIComponent(
+        `${API_BASE_URL}/music/artists/search?q=${encodeURIComponent(
           query.trim(),
         )}`,
       );
@@ -66,7 +68,8 @@ export default function CustomMixPage() {
       selectedArtists.filter((artist) => artist.id !== artistId),
     );
   }
-    function startQuiz() {
+
+  function startQuiz() {
     if (selectedArtists.length === 0) {
       return;
     }
@@ -149,13 +152,13 @@ export default function CustomMixPage() {
             </div>
 
             <button
-  onClick={startQuiz}
-  disabled={selectedArtists.length === 0}
-  className="mt-5 rounded-full bg-lime-400 px-6 py-3 font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50"
->
-  Start quiz with {selectedArtists.length} artist
-  {selectedArtists.length > 1 ? 's' : ''}
-</button>
+              onClick={startQuiz}
+              disabled={selectedArtists.length === 0}
+              className="mt-5 rounded-full bg-lime-400 px-6 py-3 font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Start quiz with {selectedArtists.length} artist
+              {selectedArtists.length > 1 ? 's' : ''}
+            </button>
           </div>
         )}
 
