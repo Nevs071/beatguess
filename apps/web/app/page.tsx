@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 type HealthResponse = {
   status: string;
@@ -37,29 +38,29 @@ export default function Home() {
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg text-zinc-300">
-          Test your music knowledge with audio previews, artist challenges,
-          genre quizzes, and custom artist mixes.
+          Build your own music quiz from your favorite artists, listen to audio
+          previews, and guess the correct songs.
         </p>
 
         <div className="mt-10 grid w-full max-w-3xl gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-            <h2 className="text-xl font-semibold">Genre Mode</h2>
+            <h2 className="text-xl font-semibold">Artist Search</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Play quizzes based on rap, pop, afrobeat, R&B and more.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-            <h2 className="text-xl font-semibold">Artist Mode</h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Choose one artist and guess their songs from previews.
+              Search artists directly from Deezer.
             </p>
           </div>
 
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
             <h2 className="text-xl font-semibold">Custom Mix</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Pick multiple artists from different genres and create your quiz.
+              Choose many artists and create your own quiz.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+            <h2 className="text-xl font-semibold">Audio Quiz</h2>
+            <p className="mt-2 text-sm text-zinc-400">
+              Guess songs from 30-second previews.
             </p>
           </div>
         </div>
@@ -69,9 +70,12 @@ export default function Home() {
           <span className="font-semibold text-lime-300">{backendStatus}</span>
         </div>
 
-        <button className="mt-8 rounded-full bg-lime-400 px-8 py-3 font-semibold text-black transition hover:bg-lime-300">
-          Start Quiz
-        </button>
+        <Link
+          href="/quiz/custom-mix"
+          className="mt-8 rounded-full bg-lime-400 px-8 py-3 font-semibold text-black transition hover:bg-lime-300"
+        >
+          Start Custom Mix Quiz
+        </Link>
       </section>
     </main>
   );
