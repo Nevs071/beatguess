@@ -1,0 +1,300 @@
+'use client';
+
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+type Track = {
+  id: number;
+  title: string;
+  preview: string;
+  duration: number;
+  rank: number;
+  artistId: number;
+  artistName: string;
+  albumId: number;
+  albumTitle: string;
+  cover: string;
+  coverLarge: string;
+};
+
+type Question = {
+  track: Track;
+  options: Track[];
+};
+
+function shuffleArray<T>(items: T[]): T[] {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
+function createQuestions(tracks: Track[], amount = 10): Question[] {
+  const uniqueTracks = tracks.filter(
+    (track, index, self) =>
+      track.preview &&
+      self.findIndex((item) => item.id === track.id) === index,
+  );
+
+  const shuffledTracks = shuffleArray(uniqueTracks);
+  const selectedTracks = shuffledTracks.slice(0, amount);
+
+  return selectedTracks.map((correctTrack) => {
+    const wrongOptions = shuffleArray(
+      uniqueTracks.filter((track) => track.id !== correctTrack.id),
+    ).slice(0, 3);
+
+    return {
+      track: correctTrack,
+      options: shuffleArray([correctTrack, ...wrongOptions]),
+    };
+  });
+}
+
+function QuizPlayContent() {
+  const searchParams = useSearchParams();
+  const artistIdsParam = searchParams.get('artists');
+
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const currentQuestion = questions[currentQuestionIndex];
+  const isFinished = questions.length > 0 && currentQuestionIndex >= questions.length;
+
+  const progressText = useMemo(() => {
+    if (questions.length === 0) {
+      return '0 / 0';
+    }
+
+    return `${Math.min(currentQuestionIndex + 1, questions.length)} / ${
+      questions.length
+    }`;
+  }, [currentQuestionIndex, questions.length]);
+
+  useEffect(() => {
+    async function loadTracks() {
+      if (!artistIdsParam) {
+        setError('No artists selected. Go back and choose artists first.');
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      setError('');
+
+      try {
+        const artistIds = artistIdsParam
+          .split(',')
+          .map((id) => Number(id))
+          .filter(Boolean);
+
+        const responses = await Promise.all(
+          artistIds.map((artistId) =>
+            fetch(`http://localhost:4000/music/artists/${artistId}/tracks`),
+          ),
+        );
+
+        const failedResponse = responses.find((response) => !response.ok);
+
+        if (failedResponse) {
+          throw new Error('Could not fetch tracks');
+        }
+
+        const tracksByArtist: Track[][] = await Promise.all(
+          responses.map((response) => response.json()),
+        );
+
+        const allTracks = tracksByArtist.flat().filter((track) => track.preview);
+
+        if (allTracks.length < 4) {
+          setError('Not enough preview tracks found for these artists.');
+          return;
+        }
+
+        const generatedQuestions = createQuestions(allTracks, 10);
+        setQuestions(generatedQuestions);
+      } catch {
+        setError('Could not load quiz. Check if the backend is running.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadTracks();
+  }, [artistIdsParam]);
+
+  function answerQuestion(trackId: number) {
+    if (!currentQuestion || selectedTrackId !== null) {
+      return;
+    }
+
+    setSelectedTrackId(trackId);
+
+    if (trackId === currentQuestion.track.id) {
+      setScore((currentScore) => currentScore + 100);
+    }
+  }
+
+  function nextQuestion() {
+    setSelectedTrackId(null);
+    setCurrentQuestionIndex((currentIndex) => currentIndex + 1);
+  }
+
+  if (isLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black text-white">
+        <p className="text-zinc-400">Loading your quiz...</p>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black px-6 text-white">
+        <div className="max-w-xl rounded-3xl border border-red-500/30 bg-red-950/30 p-8 text-center">
+          <h1 className="text-2xl font-bold">Quiz could not start</h1>
+          <p className="mt-3 text-red-200">{error}</p>
+          <a
+            href="/quiz/custom-mix"
+            className="mt-6 inline-block rounded-full bg-lime-400 px-6 py-3 font-semibold text-black"
+          >
+            Choose artists again
+          </a>
+        </div>
+      </main>
+    );
+  }
+
+  if (isFinished) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-black px-6 text-white">
+        <div className="max-w-xl rounded-3xl border border-lime-400/30 bg-zinc-950 p-8 text-center">
+          <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
+            Quiz finished
+          </p>
+          <h1 className="mt-4 text-5xl font-bold">Score: {score}</h1>
+          <p className="mt-4 text-zinc-400">
+            You played {questions.length} questions.
+          </p>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <a
+              href="/quiz/custom-mix"
+              className="rounded-full bg-lime-400 px-6 py-3 font-semibold text-black"
+            >
+              Play another mix
+            </a>
+
+            <a
+              href="/"
+              className="rounded-full border border-zinc-700 px-6 py-3 font-semibold text-white"
+            >
+              Back home
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-black px-6 py-10 text-white">
+      <section className="mx-auto max-w-4xl">
+        <a href="/quiz/custom-mix" className="text-sm text-lime-300">
+          ← Change artists
+        </a>
+
+        <div className="mt-8 flex items-center justify-between">
+          <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
+            Audio Quiz
+          </p>
+          <p className="text-sm text-zinc-400">{progressText}</p>
+        </div>
+
+        <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 md:p-8">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center">
+            <img
+              src={currentQuestion.track.cover}
+              alt={currentQuestion.track.albumTitle}
+              className="h-32 w-32 rounded-3xl object-cover"
+            />
+
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold">Guess the song title</h1>
+              <p className="mt-2 text-zinc-400">
+                Listen to the 30-second preview and choose the correct song.
+              </p>
+
+              <audio
+                controls
+                autoPlay
+                src={currentQuestion.track.preview}
+                className="mt-6 w-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {currentQuestion.options.map((option) => {
+            const isSelected = selectedTrackId === option.id;
+            const isCorrect = option.id === currentQuestion.track.id;
+            const showResult = selectedTrackId !== null;
+
+            let resultClass = 'border-zinc-800 bg-zinc-950 hover:border-lime-400';
+
+            if (showResult && isCorrect) {
+              resultClass = 'border-lime-400 bg-lime-400/20';
+            }
+
+            if (showResult && isSelected && !isCorrect) {
+              resultClass = 'border-red-400 bg-red-500/20';
+            }
+
+            return (
+              <button
+                key={option.id}
+                onClick={() => answerQuestion(option.id)}
+                disabled={showResult}
+                className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
+              >
+                <h2 className="text-lg font-semibold">{option.title}</h2>
+                <p className="mt-1 text-sm text-zinc-400">
+                  {option.artistName}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-8 flex items-center justify-between">
+          <p className="text-xl font-semibold">Score: {score}</p>
+
+          {selectedTrackId !== null && (
+            <button
+              onClick={nextQuestion}
+              className="rounded-full bg-lime-400 px-8 py-3 font-semibold text-black transition hover:bg-lime-300"
+            >
+              Next
+            </button>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+export default function QuizPlayPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-black text-white">
+          Loading...
+        </main>
+      }
+    >
+      <QuizPlayContent />
+    </Suspense>
+  );
+}
