@@ -20,25 +20,42 @@ export default function ScoresPage() {
     clearScoreHistory();
     setHistory([]);
   }
+  const bestScore =
+  history.length > 0
+    ? [...history].sort((firstScore, secondScore) => {
+        if (secondScore.score !== firstScore.score) {
+          return secondScore.score - firstScore.score;
+        }
+
+        if (secondScore.accuracy !== firstScore.accuracy) {
+          return secondScore.accuracy - firstScore.accuracy;
+        }
+
+        return secondScore.correctAnswers - firstScore.correctAnswers;
+      })[0]
+    : null;
 
   const text = {
-    en: {
-      backHome: 'Back home',
-      title: 'Local score history',
-      subtitle:
-        'Scores are saved only in this browser. Later we can replace this with real accounts and online leaderboards.',
-      emptyTitle: 'No scores yet',
-      emptyDescription: 'Finish a quiz and your result will appear here.',
-      player: 'Player',
-      score: 'Score',
-      correct: 'Correct',
-      accuracy: 'Accuracy',
-      difficulty: 'Difficulty',
-      rank: 'Rank',
-      date: 'Date',
-      clear: 'Clear history',
-      play: 'Play a quiz',
-    },
+   en: {
+  backHome: 'Back home',
+  title: 'Local score history',
+  subtitle:
+    'Scores are saved only in this browser. Later we can replace this with real accounts and online leaderboards.',
+  emptyTitle: 'No scores yet',
+  emptyDescription: 'Finish a quiz and your result will appear here.',
+  personalBest: 'Personal best',
+  bestDescription: 'Your strongest local result so far.',
+  noBestYet: 'No personal best yet',
+  player: 'Player',
+  score: 'Score',
+  correct: 'Correct',
+  accuracy: 'Accuracy',
+  difficulty: 'Difficulty',
+  rank: 'Rank',
+  date: 'Date',
+  clear: 'Clear history',
+  play: 'Play a quiz',
+},
     fr: {
       backHome: 'Retour accueil',
       title: 'Historique local des scores',
@@ -55,6 +72,9 @@ export default function ScoresPage() {
       date: 'Date',
       clear: 'Effacer l’historique',
       play: 'Jouer un quiz',
+      personalBest: 'Meilleur score',
+bestDescription: 'Ton meilleur résultat local jusqu’à maintenant.',
+noBestYet: 'Aucun meilleur score pour le moment',
     },
     de: {
       backHome: 'Zurück zur Startseite',
@@ -72,6 +92,9 @@ export default function ScoresPage() {
       date: 'Datum',
       clear: 'Historie löschen',
       play: 'Quiz spielen',
+      personalBest: 'Persönlicher Bestwert',
+bestDescription: 'Dein bisher stärkstes lokales Ergebnis.',
+noBestYet: 'Noch kein persönlicher Bestwert',
     },
   }[language];
 
@@ -117,6 +140,55 @@ export default function ScoresPage() {
               </button>
             </div>
           </div>
+          {bestScore && (
+  <div className="mt-10 rounded-3xl border border-lime-400/30 bg-lime-400/10 p-6">
+    <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
+          {text.personalBest}
+        </p>
+
+        <h2 className="mt-3 text-3xl font-black text-white">
+          {bestScore.playerName}
+        </h2>
+
+        <p className="mt-2 text-sm text-zinc-400">
+          {text.bestDescription}
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+          <p className="text-sm text-zinc-500">{text.score}</p>
+          <p className="mt-1 text-3xl font-black text-lime-300">
+            {bestScore.score}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+          <p className="text-sm text-zinc-500">{text.correct}</p>
+          <p className="mt-1 text-3xl font-black text-lime-300">
+            {bestScore.correctAnswers} / {bestScore.totalQuestions}
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+          <p className="text-sm text-zinc-500">{text.accuracy}</p>
+          <p className="mt-1 text-3xl font-black text-lime-300">
+            {bestScore.accuracy}%
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-5 rounded-2xl border border-zinc-800 bg-black p-4">
+      <p className="text-sm text-zinc-500">{text.rank}</p>
+      <p className="mt-1 text-xl font-bold text-white">
+        {bestScore.rankTitle}
+      </p>
+    </div>
+  </div>
+)}
 
           {history.length === 0 ? (
             <div className="mt-10 rounded-3xl border border-dashed border-zinc-800 bg-black p-10 text-center">

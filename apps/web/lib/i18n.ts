@@ -72,6 +72,11 @@ export const translations = {
       easy: 'Easy',
       medium: 'Medium',
       hard: 'Hard',
+      answerMode: 'Answer mode',
+multipleChoice: 'Multiple choice',
+typingChallenge: 'Typing challenge',
+multipleChoiceDescription: 'Choose the correct answer from 4 options.',
+typingChallengeDescription: 'Type the answer yourself. Harder, but more competitive.',
     },
 
     quizPlay: {
@@ -197,6 +202,11 @@ export const translations = {
       easy: 'Facile',
       medium: 'Moyen',
       hard: 'Difficile',
+      answerMode: 'Mode de réponse',
+multipleChoice: 'Choix multiple',
+typingChallenge: 'Défi écrit',
+multipleChoiceDescription: 'Choisis la bonne réponse parmi 4 options.',
+typingChallengeDescription: 'Écris la réponse toi-même. Plus difficile, mais plus compétitif.',
     },
 
     quizPlay: {
@@ -324,6 +334,11 @@ export const translations = {
       easy: 'Einfach',
       medium: 'Mittel',
       hard: 'Schwer',
+      answerMode: 'Antwortmodus',
+multipleChoice: 'Multiple Choice',
+typingChallenge: 'Schreib-Challenge',
+multipleChoiceDescription: 'Wähle die richtige Antwort aus 4 Optionen.',
+typingChallengeDescription: 'Tippe die Antwort selbst. Schwieriger, aber kompetitiver.',
     },
 
     quizPlay: {

@@ -16,6 +16,7 @@ type Artist = {
 };
 
 type Difficulty = 'easy' | 'medium' | 'hard';
+type AnswerMode = 'mcq' | 'typed';
 
 export default function CustomMixPage() {
   const router = useRouter();
@@ -30,6 +31,7 @@ export default function CustomMixPage() {
   const [historyResetMessage, setHistoryResetMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [answerMode, setAnswerMode] = useState<AnswerMode>('mcq');
 
   async function searchArtists() {
     if (query.trim().length < 2) {
@@ -181,6 +183,12 @@ export default function CustomMixPage() {
                     {difficultyLabel}
                   </span>
                 </div>
+                <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+  <span className="text-zinc-400">{t.answerMode}</span>
+  <span className="font-bold text-lime-300">
+    {answerMode === 'mcq' ? t.multipleChoice : t.typingChallenge}
+  </span>
+</div>
 
                 <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
                   <span className="text-zinc-400">{t.quizLength}</span>
@@ -332,7 +340,50 @@ export default function CustomMixPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
                   {t.quizLength}
                 </p>
+                  <div className="mt-6">
+  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
+    {t.answerMode}
+  </p>
 
+  <div className="mt-3 space-y-3">
+    {[
+      {
+        value: 'mcq',
+        label: t.multipleChoice,
+        description: t.multipleChoiceDescription,
+      },
+      {
+        value: 'typed',
+        label: t.typingChallenge,
+        description: t.typingChallengeDescription,
+      },
+    ].map((mode) => (
+      <button
+        key={mode.value}
+        type="button"
+        onClick={() => setAnswerMode(mode.value as AnswerMode)}
+        className={`w-full rounded-2xl border p-4 text-left transition ${
+          answerMode === mode.value
+            ? 'border-lime-400 bg-lime-400/10'
+            : 'border-zinc-800 bg-black hover:border-lime-400'
+        }`}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="font-bold">{mode.label}</h3>
+            <p className="mt-1 text-sm text-zinc-400">
+              {mode.description}
+            </p>
+          </div>
+
+          {answerMode === mode.value && (
+            <span className="text-lime-300">●</span>
+          )}
+        </div>
+      </button>
+    ))}
+  </div>
+</div>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   {[5, 10, 15, 20].map((amount) => (
                     <button
