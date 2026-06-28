@@ -42,7 +42,7 @@ type AnswerResult = {
   isCorrect: boolean;
 };
 
-type QuizPlayTranslations = typeof translations.en.quizPlay;
+type QuizPlayTranslations = (typeof translations)[Language]['quizPlay'];
 
 const PLAYED_TRACK_SEGMENTS_STORAGE_KEY = 'beatguess-played-track-segments';
 
