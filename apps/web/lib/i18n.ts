@@ -87,6 +87,10 @@ typeArtistNameDescription: 'Listen and type the artist name.',
 typeAlbumNameDescription: 'Listen and type the album name.',
 mixedTypingDescription: 'The app randomly asks for song, artist, or album.',
 questionType: 'Question type',
+chooseSongTitleDescription: 'Listen and choose the correct song title.',
+chooseArtistNameDescription: 'Listen and choose the correct artist.',
+chooseAlbumNameDescription: 'Listen and choose the correct album.',
+mixedChoiceDescription: 'The app randomly asks for song, artist, or album.',
 },
 
 
@@ -243,6 +247,10 @@ typeArtistNameDescription: 'Écoute et écris le nom de l’artiste.',
 typeAlbumNameDescription: 'Écoute et écris le nom de l’album.',
 mixedTypingDescription: 'L’application demande au hasard la chanson, l’artiste ou l’album.',
 questionType: 'Type de question',
+chooseSongTitleDescription: 'Écoute et choisis le bon titre.',
+chooseArtistNameDescription: 'Écoute et choisis le bon artiste.',
+chooseAlbumNameDescription: 'Écoute et choisis le bon album.',
+mixedChoiceDescription: 'L’application demande au hasard la chanson, l’artiste ou l’album.',
     },
 
     quizPlay: {
@@ -399,6 +407,10 @@ typeArtistNameDescription: 'Höre zu und tippe den Künstlernamen.',
 typeAlbumNameDescription: 'Höre zu und tippe den Albumnamen.',
 mixedTypingDescription: 'Die App fragt zufällig nach Song, Künstler oder Album.',
 questionType: 'Fragetyp',
+chooseSongTitleDescription: 'Höre zu und wähle den richtigen Songtitel.',
+chooseArtistNameDescription: 'Höre zu und wähle den richtigen Künstler.',
+chooseAlbumNameDescription: 'Höre zu und wähle das richtige Album.',
+mixedChoiceDescription: 'Die App fragt zufällig nach Song, Künstler oder Album.',
     },
 
     quizPlay: {
