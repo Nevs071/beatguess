@@ -22,6 +22,7 @@ export default function CustomMixPage() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+  const [questionAmount, setQuestionAmount] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,7 +79,10 @@ export default function CustomMixPage() {
     }
 
     const artistIds = selectedArtists.map((artist) => artist.id).join(',');
-    router.push(`/quiz/play?artists=${artistIds}&difficulty=${difficulty}`);
+
+    router.push(
+      `/quiz/play?artists=${artistIds}&difficulty=${difficulty}&amount=${questionAmount}`,
+    );
   }
 
   return (
@@ -132,6 +136,49 @@ export default function CustomMixPage() {
           </div>
         )}
 
+        <div className="mt-8 rounded-3xl border border-lime-400/30 bg-lime-400/10 p-5">
+          <h2 className="text-xl font-semibold">Current quiz setup</h2>
+
+          <p className="mt-2 text-zinc-300">
+            Difficulty:{' '}
+            <span className="font-semibold text-lime-300">{difficulty}</span> ·
+            Questions:{' '}
+            <span className="font-semibold text-lime-300">
+              {questionAmount}
+            </span>
+          </p>
+        </div>
+
+        <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+          <h2 className="text-xl font-semibold">Choose quiz length</h2>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-4">
+            {[5, 10, 15, 20].map((amount) => (
+              <button
+                key={amount}
+                type="button"
+                onClick={() => setQuestionAmount(amount)}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  questionAmount === amount
+                    ? 'border-lime-400 bg-lime-400/10'
+                    : 'border-zinc-800 bg-black hover:border-lime-400'
+                }`}
+              >
+                <h3 className="font-semibold">{amount} questions</h3>
+                <p className="mt-1 text-sm text-zinc-400">
+                  {amount === 5
+                    ? 'Quick round'
+                    : amount === 10
+                      ? 'Standard round'
+                      : amount === 15
+                        ? 'Long round'
+                        : 'Challenge round'}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
           <h2 className="text-xl font-semibold">Choose difficulty</h2>
 
@@ -140,7 +187,7 @@ export default function CustomMixPage() {
               {
                 value: 'easy',
                 label: 'Easy',
-                description: '30-second preview',
+                description: 'Full preview',
               },
               {
                 value: 'medium',
@@ -155,6 +202,7 @@ export default function CustomMixPage() {
             ].map((level) => (
               <button
                 key={level.value}
+                type="button"
                 onClick={() => setDifficulty(level.value as Difficulty)}
                 className={`rounded-2xl border p-4 text-left transition ${
                   difficulty === level.value
@@ -179,6 +227,7 @@ export default function CustomMixPage() {
               {selectedArtists.map((artist) => (
                 <button
                   key={artist.id}
+                  type="button"
                   onClick={() => removeArtist(artist.id)}
                   className="flex items-center gap-3 rounded-full border border-lime-400/30 bg-black px-3 py-2 text-sm text-white hover:border-red-400"
                 >
@@ -194,11 +243,13 @@ export default function CustomMixPage() {
             </div>
 
             <button
+              type="button"
               onClick={startQuiz}
               disabled={selectedArtists.length === 0}
               className="mt-5 rounded-full bg-lime-400 px-6 py-3 font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Start {difficulty} quiz with {selectedArtists.length} artist
+              Start {difficulty} quiz · {questionAmount} questions ·{' '}
+              {selectedArtists.length} artist
               {selectedArtists.length > 1 ? 's' : ''}
             </button>
           </div>
@@ -208,6 +259,7 @@ export default function CustomMixPage() {
           {artists.map((artist) => (
             <button
               key={artist.id}
+              type="button"
               onClick={() => selectArtist(artist)}
               className="flex items-center gap-4 rounded-3xl border border-zinc-800 bg-zinc-950 p-4 text-left transition hover:border-lime-400"
             >

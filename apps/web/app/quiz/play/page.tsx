@@ -30,6 +30,8 @@ function QuizPlayContent() {
   const searchParams = useSearchParams();
   const artistIdsParam = searchParams.get('artists');
   const difficultyParam = searchParams.get('difficulty');
+  const amountParam = searchParams.get('amount');
+  const questionAmount = amountParam ? Number(amountParam) : 10;
 
   const difficulty: Difficulty =
     difficultyParam === 'medium' || difficultyParam === 'hard'
@@ -101,7 +103,7 @@ function QuizPlayContent() {
           },
           body: JSON.stringify({
             artistIds,
-            amount: 10,
+            amount: questionAmount,
             difficulty,
           }),
         });
@@ -120,7 +122,7 @@ function QuizPlayContent() {
     }
 
     loadQuiz();
-  }, [artistIdsParam, difficulty]);
+  }, [artistIdsParam, difficulty, questionAmount]);
 
   function formatTime(seconds: number) {
     const safeSeconds = Math.max(0, seconds);
