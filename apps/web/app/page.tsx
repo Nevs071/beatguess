@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -15,6 +15,12 @@ type HealthStatus = {
 export default function HomePage() {
   const { language } = useLanguage();
   const t = translations[language].home;
+
+  const scoresText = {
+    en: 'View scores',
+    fr: 'Voir les scores',
+    de: 'Punkte ansehen',
+  }[language];
 
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [isCheckingBackend, setIsCheckingBackend] = useState(true);
@@ -88,12 +94,21 @@ export default function HomePage() {
           )}
         </div>
 
-        <Link
-          href="/quiz/custom-mix"
-          className="mt-12 rounded-full bg-lime-400 px-10 py-4 text-lg font-black text-black transition hover:bg-lime-300"
-        >
-          {t.customMixButton}
-        </Link>
+        <div className="mt-12 flex flex-col gap-4 sm:flex-row">
+          <Link
+            href="/quiz/custom-mix"
+            className="rounded-full bg-lime-400 px-10 py-4 text-lg font-black text-black transition hover:bg-lime-300"
+          >
+            {t.customMixButton}
+          </Link>
+
+          <Link
+            href="/scores"
+            className="rounded-full border border-zinc-700 px-10 py-4 text-lg font-black text-white transition hover:border-lime-400 hover:text-lime-300"
+          >
+            {scoresText}
+          </Link>
+        </div>
       </section>
     </main>
   );
