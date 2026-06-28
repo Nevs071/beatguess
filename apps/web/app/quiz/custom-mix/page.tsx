@@ -13,12 +13,15 @@ type Artist = {
   albums: number;
 };
 
+type Difficulty = 'easy' | 'medium' | 'hard';
+
 export default function CustomMixPage() {
   const router = useRouter();
 
   const [query, setQuery] = useState('');
   const [artists, setArtists] = useState<Artist[]>([]);
   const [selectedArtists, setSelectedArtists] = useState<Artist[]>([]);
+  const [difficulty, setDifficulty] = useState<Difficulty>('easy');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -75,7 +78,7 @@ export default function CustomMixPage() {
     }
 
     const artistIds = selectedArtists.map((artist) => artist.id).join(',');
-    router.push(`/quiz/play?artists=${artistIds}`);
+    router.push(`/quiz/play?artists=${artistIds}&difficulty=${difficulty}`);
   }
 
   return (
@@ -96,7 +99,7 @@ export default function CustomMixPage() {
 
           <p className="mt-4 max-w-2xl text-zinc-400">
             Search artists from different genres and add them to your custom
-            quiz mix. Later, BeatGuess will generate audio questions from this
+            quiz mix. BeatGuess will generate audio questions from your
             selection.
           </p>
         </div>
@@ -129,6 +132,45 @@ export default function CustomMixPage() {
           </div>
         )}
 
+        <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+          <h2 className="text-xl font-semibold">Choose difficulty</h2>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {[
+              {
+                value: 'easy',
+                label: 'Easy',
+                description: '30-second preview',
+              },
+              {
+                value: 'medium',
+                label: 'Medium',
+                description: '20-second preview',
+              },
+              {
+                value: 'hard',
+                label: 'Hard',
+                description: '10-second preview',
+              },
+            ].map((level) => (
+              <button
+                key={level.value}
+                onClick={() => setDifficulty(level.value as Difficulty)}
+                className={`rounded-2xl border p-4 text-left transition ${
+                  difficulty === level.value
+                    ? 'border-lime-400 bg-lime-400/10'
+                    : 'border-zinc-800 bg-black hover:border-lime-400'
+                }`}
+              >
+                <h3 className="font-semibold">{level.label}</h3>
+                <p className="mt-1 text-sm text-zinc-400">
+                  {level.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {selectedArtists.length > 0 && (
           <div className="mt-10 rounded-3xl border border-lime-400/30 bg-lime-400/10 p-5">
             <h2 className="text-xl font-semibold">Selected artists</h2>
@@ -156,7 +198,7 @@ export default function CustomMixPage() {
               disabled={selectedArtists.length === 0}
               className="mt-5 rounded-full bg-lime-400 px-6 py-3 font-semibold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Start quiz with {selectedArtists.length} artist
+              Start {difficulty} quiz with {selectedArtists.length} artist
               {selectedArtists.length > 1 ? 's' : ''}
             </button>
           </div>

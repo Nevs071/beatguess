@@ -4,6 +4,7 @@ import { QuizService } from './quiz.service';
 type GenerateQuizBody = {
   artistIds: number[];
   amount?: number;
+  difficulty?: 'easy' | 'medium' | 'hard';
 };
 
 @Controller('quiz')
@@ -24,6 +25,10 @@ export class QuizController {
       throw new BadRequestException('At least one valid artistId is required');
     }
 
-    return this.quizService.generateQuiz(artistIds, body.amount ?? 10);
+    return this.quizService.generateQuiz(
+  artistIds,
+  body.amount ?? 10,
+  body.difficulty ?? 'easy',
+);
   }
 }
