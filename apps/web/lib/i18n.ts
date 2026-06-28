@@ -86,6 +86,7 @@ typeSongTitleDescription: 'Listen and type the song title.',
 typeArtistNameDescription: 'Listen and type the artist name.',
 typeAlbumNameDescription: 'Listen and type the album name.',
 mixedTypingDescription: 'The app randomly asks for song, artist, or album.',
+questionType: 'Question type',
 },
 
 
@@ -241,6 +242,7 @@ typeSongTitleDescription: 'Écoute et écris le titre de la chanson.',
 typeArtistNameDescription: 'Écoute et écris le nom de l’artiste.',
 typeAlbumNameDescription: 'Écoute et écris le nom de l’album.',
 mixedTypingDescription: 'L’application demande au hasard la chanson, l’artiste ou l’album.',
+questionType: 'Type de question',
     },
 
     quizPlay: {
@@ -396,6 +398,7 @@ typeSongTitleDescription: 'Höre zu und tippe den Songtitel.',
 typeArtistNameDescription: 'Höre zu und tippe den Künstlernamen.',
 typeAlbumNameDescription: 'Höre zu und tippe den Albumnamen.',
 mixedTypingDescription: 'Die App fragt zufällig nach Song, Künstler oder Album.',
+questionType: 'Fragetyp',
     },
 
     quizPlay: {

@@ -23,6 +23,7 @@ type QuizOption = {
   id: number;
   title: string;
   artistName: string;
+  albumTitle: string;
 };
 
 type QuizQuestion = {
@@ -116,13 +117,14 @@ export class QuizService {
         uniqueTracks.filter((track) => track.id !== correctTrack.id),
       ).slice(0, 3);
 
-      const options = this.shuffleArray([correctTrack, ...wrongOptions]).map(
-        (track) => ({
-          id: track.id,
-          title: track.title,
-          artistName: track.artistName,
-        }),
-      );
+     const options = this.shuffleArray([correctTrack, ...wrongOptions]).map(
+  (track) => ({
+    id: track.id,
+    title: track.title,
+    artistName: track.artistName,
+    albumTitle: track.albumTitle,
+  }),
+);
 
       return {
         id: `question-${index + 1}-${correctTrack.id}`,

@@ -416,10 +416,10 @@ export default function CustomMixPage() {
   </div>
 </div>
 
-{answerMode === 'typed' && (
+
   <div className="mt-6">
     <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-      {t.typingQuestionType}
+      {t.questionType}
     </p>
 
     <div className="mt-3 grid gap-3">
@@ -471,7 +471,7 @@ export default function CustomMixPage() {
       ))}
     </div>
   </div>
-)}
+
 
               <div className="mt-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">

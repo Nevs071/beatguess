@@ -100,6 +100,67 @@ function getTypedCorrectAnswer(
   return currentCorrectOption.title;
 }
 
+type McqAnswerOption = {
+  id: string;
+  trackId: number;
+  label: string;
+  subtitle: string;
+  isCorrect: boolean;
+};
+
+function getTrackAnswerValue(
+  answerKind: ActiveTypedAnswerKind,
+  currentQuestion: QuizQuestion,
+  option: QuizOption,
+) {
+  if (answerKind === 'artist') {
+    return option.artistName;
+  }
+
+  if (answerKind === 'album') {
+    return option.albumTitle || currentQuestion.albumTitle;
+  }
+
+  return option.title;
+}
+
+function getUniqueMcqAnswerOptions(
+  answerKind: ActiveTypedAnswerKind,
+  currentQuestion: QuizQuestion,
+  currentCorrectOption: QuizOption,
+): McqAnswerOption[] {
+  const correctAnswerValue = getTrackAnswerValue(
+    answerKind,
+    currentQuestion,
+    currentCorrectOption,
+  );
+
+  const seenAnswers = new Set<string>();
+
+  return currentQuestion.options
+    .map((option) => {
+      const label = getTrackAnswerValue(answerKind, currentQuestion, option);
+      const normalizedLabel = normalizeTypedAnswer(label);
+
+      if (!label || seenAnswers.has(normalizedLabel)) {
+        return null;
+      }
+
+      seenAnswers.add(normalizedLabel);
+
+      return {
+        id: `${answerKind}-${normalizedLabel}-${option.id}`,
+        trackId: option.id,
+        label,
+        subtitle: answerKind === 'artist' ? '' : option.artistName,
+        isCorrect:
+          normalizeTypedAnswer(label) ===
+          normalizeTypedAnswer(correctAnswerValue),
+      };
+    })
+    .filter((option): option is McqAnswerOption => option !== null);
+}
+
 function readPlayedTrackSegments(): PlayedTrackSegments {
   try {
     const rawValue = localStorage.getItem(PLAYED_TRACK_SEGMENTS_STORAGE_KEY);
@@ -285,6 +346,14 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
         currentCorrectOption,
       )
     : '';
+    const currentMcqAnswerOptions =
+  currentQuestion && currentCorrectOption
+    ? getUniqueMcqAnswerOptions(
+        activeTypedAnswerKind,
+        currentQuestion,
+        currentCorrectOption,
+      )
+    : [];
 
   const previewStartSeconds = currentQuestion?.previewStartSeconds ?? 0;
 
@@ -465,45 +534,31 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
     }
   }
 
-  function answerQuestion(trackId: number) {
-    if (!currentQuestion || selectedTrackId !== null) {
-      return;
-    }
-
-    const selectedOption = currentQuestion.options.find(
-      (option) => option.id === trackId,
-    );
-
-    const correctOption = currentQuestion.options.find(
-      (option) => option.id === currentQuestion.correctTrackId,
-    );
-
-    if (!selectedOption || !correctOption) {
-      return;
-    }
-
-    const isCorrect = trackId === currentQuestion.correctTrackId;
-
-    setSelectedTrackId(trackId);
-
-    setAnswerResults((currentResults) => [
-      ...currentResults,
-      {
-        questionId: currentQuestion.id,
-        selectedTitle: selectedOption.title,
-        selectedArtistName: selectedOption.artistName,
-        correctTitle: currentTypedCorrectAnswer,
-correctArtistName:
-  activeTypedAnswerKind === 'artist' ? '' : currentQuestion.artistName,
-        isCorrect,
-      },
-    ]);
-
-    if (isCorrect) {
-      setScore((currentScore) => currentScore + 100);
-      setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
-    }
+  function answerQuestion(selectedOption: McqAnswerOption) {
+  if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
+    return;
   }
+
+  setSelectedTrackId(selectedOption.trackId);
+
+  setAnswerResults((currentResults) => [
+    ...currentResults,
+    {
+      questionId: currentQuestion.id,
+      selectedTitle: selectedOption.label,
+      selectedArtistName: selectedOption.subtitle,
+      correctTitle: currentTypedCorrectAnswer,
+      correctArtistName:
+        activeTypedAnswerKind === 'artist' ? '' : currentQuestion.artistName,
+      isCorrect: selectedOption.isCorrect,
+    },
+  ]);
+
+  if (selectedOption.isCorrect) {
+    setScore((currentScore) => currentScore + 100);
+    setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
+  }
+}
   function submitTypedAnswer() {
   if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
     return;
@@ -853,9 +908,9 @@ const isCorrect =
 
        {answerMode === 'mcq' ? (
   <div className="mt-6 grid gap-4 md:grid-cols-2">
-    {currentQuestion.options.map((option) => {
-      const isSelected = selectedTrackId === option.id;
-      const isCorrect = option.id === currentQuestion.correctTrackId;
+    {currentMcqAnswerOptions.map((option) => {
+     const isSelected = selectedTrackId === option.trackId;
+     const isCorrect = option.isCorrect;
       const showResult = selectedTrackId !== null;
 
       let resultClass =
@@ -873,17 +928,17 @@ const isCorrect =
         <button
           key={option.id}
           type="button"
-          onClick={() => answerQuestion(option.id)}
+          onClick={() => answerQuestion(option)}
           disabled={showResult}
           className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
         >
-          <h2 className="text-lg font-semibold">{option.title}</h2>
+          <h2 className="text-lg font-semibold">{option.label}</h2>
 
-          {showResult && (
-            <p className="mt-1 text-sm text-zinc-400">
-              {option.artistName}
-            </p>
-          )}
+{showResult && option.subtitle && (
+  <p className="mt-1 text-sm text-zinc-400">
+    {option.subtitle}
+  </p>
+)}
         </button>
       );
     })}
