@@ -181,12 +181,17 @@ function QuizPlayContent() {
 
         <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 md:p-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
-            <img
-              src={currentQuestion.cover}
-              alt={currentQuestion.albumTitle}
-              className="h-32 w-32 rounded-3xl object-cover"
-            />
-
+           <div className="flex h-32 w-32 items-center justify-center rounded-3xl border border-zinc-800 bg-zinc-900">
+  {selectedTrackId === null ? (
+    <span className="text-4xl">🎵</span>
+  ) : (
+    <img
+      src={currentQuestion.cover}
+      alt={currentQuestion.albumTitle}
+      className="h-32 w-32 rounded-3xl object-cover"
+    />
+  )}
+</div>
             <div className="flex-1">
               <h1 className="text-3xl font-bold">Guess the song title</h1>
               <p className="mt-2 text-zinc-400">
