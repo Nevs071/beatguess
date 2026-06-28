@@ -4,56 +4,29 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
 
-type Track = {
+type QuizOption = {
   id: number;
   title: string;
-  preview: string;
-  duration: number;
-  rank: number;
-  artistId: number;
   artistName: string;
-  albumId: number;
-  albumTitle: string;
+};
+
+type QuizQuestion = {
+  id: string;
+  type: 'guess_song_from_audio';
+  preview: string;
   cover: string;
   coverLarge: string;
+  artistName: string;
+  albumTitle: string;
+  correctTrackId: number;
+  options: QuizOption[];
 };
-
-type Question = {
-  track: Track;
-  options: Track[];
-};
-
-function shuffleArray<T>(items: T[]): T[] {
-  return [...items].sort(() => Math.random() - 0.5);
-}
-
-function createQuestions(tracks: Track[], amount = 10): Question[] {
-  const uniqueTracks = tracks.filter(
-    (track, index, self) =>
-      track.preview &&
-      self.findIndex((item) => item.id === track.id) === index,
-  );
-
-  const shuffledTracks = shuffleArray(uniqueTracks);
-  const selectedTracks = shuffledTracks.slice(0, amount);
-
-  return selectedTracks.map((correctTrack) => {
-    const wrongOptions = shuffleArray(
-      uniqueTracks.filter((track) => track.id !== correctTrack.id),
-    ).slice(0, 3);
-
-    return {
-      track: correctTrack,
-      options: shuffleArray([correctTrack, ...wrongOptions]),
-    };
-  });
-}
 
 function QuizPlayContent() {
   const searchParams = useSearchParams();
   const artistIdsParam = searchParams.get('artists');
 
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -61,7 +34,8 @@ function QuizPlayContent() {
   const [error, setError] = useState('');
 
   const currentQuestion = questions[currentQuestionIndex];
-  const isFinished = questions.length > 0 && currentQuestionIndex >= questions.length;
+  const isFinished =
+    questions.length > 0 && currentQuestionIndex >= questions.length;
 
   const progressText = useMemo(() => {
     if (questions.length === 0) {
@@ -74,7 +48,7 @@ function QuizPlayContent() {
   }, [currentQuestionIndex, questions.length]);
 
   useEffect(() => {
-    async function loadTracks() {
+    async function loadQuiz() {
       if (!artistIdsParam) {
         setError('No artists selected. Go back and choose artists first.');
         setIsLoading(false);
@@ -90,30 +64,22 @@ function QuizPlayContent() {
           .map((id) => Number(id))
           .filter(Boolean);
 
-        const responses = await Promise.all(
-          artistIds.map((artistId) =>
-            fetch(`${API_BASE_URL}/music/artists/${artistId}/tracks`),
-          ),
-        );
+        const response = await fetch(`${API_BASE_URL}/quiz/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            artistIds,
+            amount: 10,
+          }),
+        });
 
-        const failedResponse = responses.find((response) => !response.ok);
-
-        if (failedResponse) {
-          throw new Error('Could not fetch tracks');
+        if (!response.ok) {
+          throw new Error('Could not generate quiz');
         }
 
-        const tracksByArtist: Track[][] = await Promise.all(
-          responses.map((response) => response.json()),
-        );
-
-        const allTracks = tracksByArtist.flat().filter((track) => track.preview);
-
-        if (allTracks.length < 4) {
-          setError('Not enough preview tracks found for these artists.');
-          return;
-        }
-
-        const generatedQuestions = createQuestions(allTracks, 10);
+        const generatedQuestions: QuizQuestion[] = await response.json();
         setQuestions(generatedQuestions);
       } catch {
         setError('Could not load quiz. Check if the backend is running.');
@@ -122,7 +88,7 @@ function QuizPlayContent() {
       }
     }
 
-    loadTracks();
+    loadQuiz();
   }, [artistIdsParam]);
 
   function answerQuestion(trackId: number) {
@@ -132,7 +98,7 @@ function QuizPlayContent() {
 
     setSelectedTrackId(trackId);
 
-    if (trackId === currentQuestion.track.id) {
+    if (trackId === currentQuestion.correctTrackId) {
       setScore((currentScore) => currentScore + 100);
     }
   }
@@ -145,7 +111,7 @@ function QuizPlayContent() {
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="text-zinc-400">Loading your quiz...</p>
+        <p className="text-zinc-400">Generating your quiz...</p>
       </main>
     );
   }
@@ -216,8 +182,8 @@ function QuizPlayContent() {
         <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 md:p-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
             <img
-              src={currentQuestion.track.cover}
-              alt={currentQuestion.track.albumTitle}
+              src={currentQuestion.cover}
+              alt={currentQuestion.albumTitle}
               className="h-32 w-32 rounded-3xl object-cover"
             />
 
@@ -230,7 +196,7 @@ function QuizPlayContent() {
               <audio
                 controls
                 autoPlay
-                src={currentQuestion.track.preview}
+                src={currentQuestion.preview}
                 className="mt-6 w-full"
               />
             </div>
@@ -240,10 +206,11 @@ function QuizPlayContent() {
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {currentQuestion.options.map((option) => {
             const isSelected = selectedTrackId === option.id;
-            const isCorrect = option.id === currentQuestion.track.id;
+            const isCorrect = option.id === currentQuestion.correctTrackId;
             const showResult = selectedTrackId !== null;
 
-            let resultClass = 'border-zinc-800 bg-zinc-950 hover:border-lime-400';
+            let resultClass =
+              'border-zinc-800 bg-zinc-950 hover:border-lime-400';
 
             if (showResult && isCorrect) {
               resultClass = 'border-lime-400 bg-lime-400/20';
@@ -255,16 +222,19 @@ function QuizPlayContent() {
 
             return (
               <button
-                key={option.id}
-                onClick={() => answerQuestion(option.id)}
-                disabled={showResult}
-                className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
-              >
-                <h2 className="text-lg font-semibold">{option.title}</h2>
-                <p className="mt-1 text-sm text-zinc-400">
-                  {option.artistName}
-                </p>
-              </button>
+  key={option.id}
+  onClick={() => answerQuestion(option.id)}
+  disabled={showResult}
+  className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
+>
+  <h2 className="text-lg font-semibold">{option.title}</h2>
+
+  {showResult && (
+    <p className="mt-1 text-sm text-zinc-400">
+      {option.artistName}
+    </p>
+  )}
+</button>
             );
           })}
         </div>
