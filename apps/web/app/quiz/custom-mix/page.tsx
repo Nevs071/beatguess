@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
+import { translations } from '@/lib/i18n';
+import { useLanguage } from '@/lib/use-language';
 
 type Artist = {
   id: number;
@@ -17,6 +19,8 @@ type Difficulty = 'easy' | 'medium' | 'hard';
 
 export default function CustomMixPage() {
   const router = useRouter();
+  const { language } = useLanguage();
+  const t = translations[language].customMix;
 
   const [query, setQuery] = useState('');
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -29,7 +33,7 @@ export default function CustomMixPage() {
 
   async function searchArtists() {
     if (query.trim().length < 2) {
-      setError('Type at least 2 characters.');
+      setError(t.errorShortQuery);
       return;
     }
 
@@ -50,7 +54,7 @@ export default function CustomMixPage() {
       const data: Artist[] = await response.json();
       setArtists(data);
     } catch {
-      setError('Could not search artists. Check if backend is running.');
+      setError(t.errorSearch);
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +80,7 @@ export default function CustomMixPage() {
 
   function resetPlayedHistory() {
     localStorage.removeItem('beatguess-played-track-segments');
-    setHistoryResetMessage('Played song history reset. Fresh quiz pool restored.');
+    setHistoryResetMessage(t.historyResetMessage);
 
     setTimeout(() => {
       setHistoryResetMessage('');
@@ -97,16 +101,41 @@ export default function CustomMixPage() {
 
   const difficultyDescription =
     difficulty === 'hard'
-      ? '10-second preview'
+      ? t.secondPreview10
       : difficulty === 'medium'
-        ? '20-second preview'
-        : 'Full preview';
+        ? t.secondPreview20
+        : t.fullPreview;
+
+  const difficultyLabel =
+    difficulty === 'hard'
+      ? language === 'de'
+        ? 'Schwer'
+        : language === 'fr'
+          ? 'Difficile'
+          : 'hard'
+      : difficulty === 'medium'
+        ? language === 'de'
+          ? 'Mittel'
+          : language === 'fr'
+            ? 'Moyen'
+            : 'medium'
+        : language === 'de'
+          ? 'Einfach'
+          : language === 'fr'
+            ? 'Facile'
+            : 'easy';
+
+  const selectedArtistLabel =
+    selectedArtists.length === 1 ? t.selectedArtist : t.selectedArtists;
 
   return (
     <main className="min-h-screen overflow-hidden bg-black px-5 py-8 text-white">
       <section className="mx-auto max-w-7xl">
-        <a href="/" className="text-sm font-medium text-lime-300 hover:text-lime-200">
-          ← Back home
+        <a
+          href="/"
+          className="text-sm font-medium text-lime-300 hover:text-lime-200"
+        >
+          ← {t.backHome}
         </a>
 
         <div className="relative mt-8 overflow-hidden rounded-[2rem] border border-zinc-800 bg-zinc-950 px-6 py-8 md:px-10 md:py-12">
@@ -116,16 +145,15 @@ export default function CustomMixPage() {
           <div className="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
             <div>
               <p className="text-sm uppercase tracking-[0.35em] text-lime-300">
-                Custom Artist Mix
+                {t.label}
               </p>
 
               <h1 className="mt-5 max-w-4xl text-5xl font-black tracking-tight md:text-7xl">
-                Build a quiz that feels like your playlist.
+                {t.heroTitle}
               </h1>
 
               <p className="mt-5 max-w-2xl text-lg leading-8 text-zinc-400">
-                Pick your artists, choose the challenge, and BeatGuess creates a
-                fresh audio quiz with smart replay history.
+                {t.heroDescription}
               </p>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -133,35 +161,36 @@ export default function CustomMixPage() {
                   🎧 {difficultyDescription}
                 </div>
                 <div className="rounded-full border border-zinc-800 bg-black/70 px-4 py-2 text-sm text-zinc-300">
-                  ⚡ {questionAmount} questions
+                  ⚡ {questionAmount} {t.questions}
                 </div>
                 <div className="rounded-full border border-zinc-800 bg-black/70 px-4 py-2 text-sm text-zinc-300">
-                  👥 {selectedArtists.length} selected artist
-                  {selectedArtists.length > 1 ? 's' : ''}
+                  👥 {selectedArtists.length} {selectedArtistLabel}
                 </div>
               </div>
             </div>
 
             <div className="rounded-[2rem] border border-lime-400/30 bg-black/60 p-6 shadow-2xl shadow-lime-400/10">
               <p className="text-sm uppercase tracking-[0.25em] text-lime-300">
-                Ready setup
+                {t.readySetup}
               </p>
 
               <div className="mt-6 space-y-4">
                 <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                  <span className="text-zinc-400">Difficulty</span>
-                  <span className="font-bold text-lime-300">{difficulty}</span>
-                </div>
-
-                <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                  <span className="text-zinc-400">Quiz length</span>
+                  <span className="text-zinc-400">{t.difficulty}</span>
                   <span className="font-bold text-lime-300">
-                    {questionAmount} questions
+                    {difficultyLabel}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
-                  <span className="text-zinc-400">Artists</span>
+                  <span className="text-zinc-400">{t.quizLength}</span>
+                  <span className="font-bold text-lime-300">
+                    {questionAmount} {t.questions}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                  <span className="text-zinc-400">{t.artists}</span>
                   <span className="font-bold text-lime-300">
                     {selectedArtists.length}
                   </span>
@@ -175,8 +204,8 @@ export default function CustomMixPage() {
                 className="mt-6 w-full rounded-2xl bg-lime-400 px-6 py-4 text-lg font-black text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {selectedArtists.length === 0
-                  ? 'Select artists to start'
-                  : `Start ${difficulty} quiz`}
+                  ? t.selectArtistsToStart
+                  : t.startQuiz}
               </button>
             </div>
           </div>
@@ -184,9 +213,9 @@ export default function CustomMixPage() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.75fr]">
           <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-5 md:p-6">
-            <h2 className="text-2xl font-bold">1. Search artists</h2>
+            <h2 className="text-2xl font-bold">{t.searchTitle}</h2>
             <p className="mt-2 text-sm text-zinc-400">
-              Add one artist or mix different worlds together.
+              {t.searchDescription}
             </p>
 
             <div className="mt-5 flex flex-col gap-3 md:flex-row">
@@ -198,7 +227,7 @@ export default function CustomMixPage() {
                     searchArtists();
                   }
                 }}
-                placeholder="Search artist e.g. Drake, Burna Boy, Ninho..."
+                placeholder={t.searchPlaceholder}
                 className="flex-1 rounded-2xl border border-zinc-800 bg-black px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-lime-400"
               />
 
@@ -208,7 +237,7 @@ export default function CustomMixPage() {
                 disabled={isLoading}
                 className="rounded-2xl bg-lime-400 px-8 py-4 font-bold text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isLoading ? 'Searching...' : 'Search'}
+                {isLoading ? t.searchingButton : t.searchButton}
               </button>
             </div>
 
@@ -246,15 +275,15 @@ export default function CustomMixPage() {
                         {artist.name}
                       </h3>
                       <p className="mt-1 text-sm text-zinc-400">
-                        {artist.fans.toLocaleString()} fans
+                        {artist.fans.toLocaleString()} {t.fans}
                       </p>
                       <p className="text-sm text-zinc-500">
-                        {artist.albums} albums
+                        {artist.albums} {t.albums}
                       </p>
                     </div>
 
                     <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-400 group-hover:border-lime-400 group-hover:text-lime-300">
-                      {isSelected ? 'Added' : 'Add'}
+                      {isSelected ? t.added : t.add}
                     </span>
                   </button>
                 );
@@ -264,16 +293,14 @@ export default function CustomMixPage() {
 
           <div className="space-y-6">
             <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-5 md:p-6">
-              <h2 className="text-2xl font-bold">2. Selected artists</h2>
+              <h2 className="text-2xl font-bold">{t.selectedTitle}</h2>
 
               {selectedArtists.length === 0 ? (
                 <div className="mt-5 rounded-3xl border border-dashed border-zinc-800 bg-black p-6 text-center">
                   <p className="text-4xl">🎙️</p>
-                  <p className="mt-3 text-zinc-400">
-                    Your quiz lineup is empty.
-                  </p>
+                  <p className="mt-3 text-zinc-400">{t.emptyLineup}</p>
                   <p className="mt-1 text-sm text-zinc-600">
-                    Search and add artists to unlock the start button.
+                    {t.emptyLineupDescription}
                   </p>
                 </div>
               ) : (
@@ -299,11 +326,11 @@ export default function CustomMixPage() {
             </div>
 
             <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-5 md:p-6">
-              <h2 className="text-2xl font-bold">3. Game setup</h2>
+              <h2 className="text-2xl font-bold">{t.gameSetup}</h2>
 
               <div className="mt-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                  Quiz length
+                  {t.quizLength}
                 </p>
 
                 <div className="mt-3 grid grid-cols-2 gap-3">
@@ -321,12 +348,12 @@ export default function CustomMixPage() {
                       <h3 className="font-bold">{amount}</h3>
                       <p className="mt-1 text-xs text-zinc-400">
                         {amount === 5
-                          ? 'Quick'
+                          ? t.quick
                           : amount === 10
-                            ? 'Standard'
+                            ? t.standard
                             : amount === 15
-                              ? 'Long'
-                              : 'Challenge'}
+                              ? t.long
+                              : t.challenge}
                       </p>
                     </button>
                   ))}
@@ -335,25 +362,40 @@ export default function CustomMixPage() {
 
               <div className="mt-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                  Difficulty
+                  {t.difficulty}
                 </p>
 
                 <div className="mt-3 space-y-3">
                   {[
                     {
                       value: 'easy',
-                      label: 'Easy',
-                      description: 'Full preview',
+                      label:
+                        language === 'de'
+                          ? 'Einfach'
+                          : language === 'fr'
+                            ? 'Facile'
+                            : 'Easy',
+                      description: t.fullPreview,
                     },
                     {
                       value: 'medium',
-                      label: 'Medium',
-                      description: '20-second preview',
+                      label:
+                        language === 'de'
+                          ? 'Mittel'
+                          : language === 'fr'
+                            ? 'Moyen'
+                            : 'Medium',
+                      description: t.secondPreview20,
                     },
                     {
                       value: 'hard',
-                      label: 'Hard',
-                      description: '10-second preview',
+                      label:
+                        language === 'de'
+                          ? 'Schwer'
+                          : language === 'fr'
+                            ? 'Difficile'
+                            : 'Hard',
+                      description: t.secondPreview10,
                     },
                   ].map((level) => (
                     <button
@@ -386,10 +428,9 @@ export default function CustomMixPage() {
             <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-5 md:p-6">
               <div className="flex flex-col gap-4">
                 <div>
-                  <h2 className="text-xl font-bold">Smart replay history</h2>
+                  <h2 className="text-xl font-bold">{t.smartReplayTitle}</h2>
                   <p className="mt-2 text-sm text-zinc-400">
-                    BeatGuess remembers played songs and segments to avoid
-                    repeating the same parts too often.
+                    {t.smartReplayDescription}
                   </p>
                 </div>
 
@@ -398,7 +439,7 @@ export default function CustomMixPage() {
                   onClick={resetPlayedHistory}
                   className="rounded-2xl border border-zinc-700 px-5 py-3 text-sm font-bold text-white transition hover:border-lime-400 hover:text-lime-300"
                 >
-                  Reset played history
+                  {t.resetHistory}
                 </button>
               </div>
 

@@ -3,6 +3,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
+import { translations } from '@/lib/i18n';
+import { useLanguage } from '@/lib/use-language';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -38,6 +40,8 @@ type AnswerResult = {
   isCorrect: boolean;
 };
 
+type QuizPlayTranslations = typeof translations.en.quizPlay;
+
 const PLAYED_TRACK_SEGMENTS_STORAGE_KEY = 'beatguess-played-track-segments';
 
 function readPlayedTrackSegments(): PlayedTrackSegments {
@@ -71,72 +75,87 @@ function savePlayedTrackSegments(playedTrackSegments: PlayedTrackSegments) {
   );
 }
 
-function getResultRank(accuracy: number) {
+function getDifficultyLabel(difficulty: Difficulty, t: QuizPlayTranslations) {
+  if (difficulty === 'hard') {
+    return t.hard;
+  }
+
+  if (difficulty === 'medium') {
+    return t.medium;
+  }
+
+  return t.easy;
+}
+
+function getResultRank(accuracy: number, t: QuizPlayTranslations) {
   if (accuracy === 100) {
     return {
-      title: 'BeatGuess Legend',
-      description: 'Perfect score. You really know your music.',
+      title: t.rankLegendTitle,
+      description: t.rankLegendDescription,
       emoji: '👑',
     };
   }
 
   if (accuracy >= 91) {
     return {
-      title: 'Music Genius',
-      description: 'Almost perfect. Your music knowledge is elite.',
+      title: t.rankGeniusTitle,
+      description: t.rankGeniusDescription,
       emoji: '🧠',
     };
   }
 
   if (accuracy >= 76) {
     return {
-      title: 'Hit Master',
-      description: 'Very strong performance. You know the hits.',
+      title: t.rankHitMasterTitle,
+      description: t.rankHitMasterDescription,
       emoji: '🔥',
     };
   }
 
   if (accuracy >= 61) {
     return {
-      title: 'Solid Ear',
-      description: 'Good ear. You recognized most of the tracks.',
+      title: t.rankSolidEarTitle,
+      description: t.rankSolidEarDescription,
       emoji: '🎧',
     };
   }
 
   if (accuracy >= 41) {
     return {
-      title: 'Beat Hunter',
-      description: 'Not bad. You caught a good part of the quiz.',
+      title: t.rankBeatHunterTitle,
+      description: t.rankBeatHunterDescription,
       emoji: '🎯',
     };
   }
 
   if (accuracy >= 21) {
     return {
-      title: 'Warm-up Listener',
-      description: 'You are warming up. A few more rounds will help.',
+      title: t.rankWarmupTitle,
+      description: t.rankWarmupDescription,
       emoji: '🔊',
     };
   }
 
   if (accuracy >= 1) {
     return {
-      title: 'Rookie Ear',
-      description: 'You got at least one. Time to sharpen the ear.',
+      title: t.rankRookieTitle,
+      description: t.rankRookieDescription,
       emoji: '🌱',
     };
   }
 
   return {
-    title: 'Silent Mode',
-    description: 'No correct answer this time. Run it back.',
+    title: t.rankSilentTitle,
+    description: t.rankSilentDescription,
     emoji: '😅',
   };
 }
 
 function QuizPlayContent() {
   const searchParams = useSearchParams();
+  const { language } = useLanguage();
+  const t = translations[language].quizPlay;
+
   const artistIdsParam = searchParams.get('artists');
   const difficultyParam = searchParams.get('difficulty');
   const amountParam = searchParams.get('amount');
@@ -160,7 +179,7 @@ function QuizPlayContent() {
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [answerResults, setAnswerResults] = useState<AnswerResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [hasError, setHasError] = useState(false);
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
@@ -194,7 +213,7 @@ function QuizPlayContent() {
       ? Math.round((correctAnswers / questions.length) * 100)
       : 0;
 
-  const resultRank = getResultRank(accuracy);
+  const resultRank = getResultRank(accuracy, t);
 
   const progressText = useMemo(() => {
     if (questions.length === 0) {
@@ -209,13 +228,13 @@ function QuizPlayContent() {
   useEffect(() => {
     async function loadQuiz() {
       if (!artistIdsParam) {
-        setError('No artists selected. Go back and choose artists first.');
+        setHasError(true);
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
-      setError('');
+      setHasError(false);
 
       try {
         const artistIds = artistIdsParam
@@ -253,10 +272,7 @@ function QuizPlayContent() {
           const previousSegments = updatedPlayedTrackSegments[trackId] ?? [];
 
           updatedPlayedTrackSegments[trackId] = Array.from(
-            new Set([
-              ...previousSegments,
-              question.previewStartSeconds ?? 0,
-            ]),
+            new Set([...previousSegments, question.previewStartSeconds ?? 0]),
           );
         });
 
@@ -276,7 +292,7 @@ function QuizPlayContent() {
         setAudioDuration(0);
         setIsAudioPlaying(false);
       } catch {
-        setError('Could not load quiz. Check if the backend is running.');
+        setHasError(true);
       } finally {
         setIsLoading(false);
       }
@@ -375,22 +391,23 @@ function QuizPlayContent() {
   if (isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="text-zinc-400">Generating your quiz...</p>
+        <p className="text-zinc-400">{t.loading}</p>
       </main>
     );
   }
 
-  if (error) {
+  if (hasError) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black px-6 text-white">
         <div className="max-w-xl rounded-3xl border border-red-500/30 bg-red-950/30 p-8 text-center">
-          <h1 className="text-2xl font-bold">Quiz could not start</h1>
-          <p className="mt-3 text-red-200">{error}</p>
+          <h1 className="text-2xl font-bold">{t.quizCouldNotStart}</h1>
+          <p className="mt-3 text-red-200">{t.noQuestion}</p>
+
           <a
             href="/quiz/custom-mix"
             className="mt-6 inline-block rounded-full bg-lime-400 px-6 py-3 font-semibold text-black"
           >
-            Choose artists again
+            {t.changeArtists}
           </a>
         </div>
       </main>
@@ -403,7 +420,7 @@ function QuizPlayContent() {
         <section className="mx-auto max-w-3xl">
           <div className="rounded-3xl border border-lime-400/30 bg-zinc-950 p-8 text-center">
             <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
-              Quiz finished
+              {t.quizFinished}
             </p>
 
             <div className="mt-6 text-7xl">{resultRank.emoji}</div>
@@ -416,21 +433,21 @@ function QuizPlayContent() {
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-                <p className="text-sm text-zinc-500">Score</p>
+                <p className="text-sm text-zinc-500">{t.score}</p>
                 <p className="mt-2 text-3xl font-bold text-lime-300">
                   {score}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-                <p className="text-sm text-zinc-500">Correct answers</p>
+                <p className="text-sm text-zinc-500">{t.correctAnswers}</p>
                 <p className="mt-2 text-3xl font-bold text-lime-300">
                   {correctAnswers} / {questions.length}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-                <p className="text-sm text-zinc-500">Accuracy</p>
+                <p className="text-sm text-zinc-500">{t.accuracy}</p>
                 <p className="mt-2 text-3xl font-bold text-lime-300">
                   {accuracy}%
                 </p>
@@ -439,7 +456,7 @@ function QuizPlayContent() {
 
             <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-5 text-left">
               <p className="text-sm font-semibold text-zinc-300">
-                Answer review
+                {t.answerReview}
               </p>
 
               <div className="mt-4 space-y-3">
@@ -454,7 +471,8 @@ function QuizPlayContent() {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-semibold">
-                        Question {index + 1} {answer.isCorrect ? '✅' : '❌'}
+                        {t.question} {index + 1}{' '}
+                        {answer.isCorrect ? '✅' : '❌'}
                       </p>
 
                       <p
@@ -462,12 +480,12 @@ function QuizPlayContent() {
                           answer.isCorrect ? 'text-lime-300' : 'text-red-300'
                         }`}
                       >
-                        {answer.isCorrect ? 'Correct' : 'Wrong'}
+                        {answer.isCorrect ? t.correct : t.wrong}
                       </p>
                     </div>
 
                     <p className="mt-3 text-sm text-zinc-400">
-                      Correct answer
+                      {t.correctAnswer}
                     </p>
                     <p className="font-semibold text-white">
                       {answer.correctTitle}{' '}
@@ -476,7 +494,7 @@ function QuizPlayContent() {
                       </span>
                     </p>
 
-                    <p className="mt-3 text-sm text-zinc-400">Your answer</p>
+                    <p className="mt-3 text-sm text-zinc-400">{t.yourAnswer}</p>
                     <p className="font-semibold text-white">
                       {answer.selectedTitle}{' '}
                       <span className="text-zinc-500">
@@ -490,13 +508,10 @@ function QuizPlayContent() {
 
             <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-5 text-left">
               <p className="text-sm font-semibold text-zinc-300">
-                Rank system
+                {t.rankSystem}
               </p>
-              <p className="mt-2 text-sm text-zinc-500">
-                0% Silent Mode · 1–20% Rookie Ear · 21–40% Warm-up Listener ·
-                41–60% Beat Hunter · 61–75% Solid Ear · 76–90% Hit Master ·
-                91–99% Music Genius · 100% BeatGuess Legend
-              </p>
+
+              <p className="mt-2 text-sm text-zinc-500">{t.rankSystemText}</p>
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -504,14 +519,14 @@ function QuizPlayContent() {
                 href="/quiz/custom-mix"
                 className="rounded-full bg-lime-400 px-6 py-3 font-semibold text-black"
               >
-                Play another mix
+                {t.playAnother}
               </a>
 
               <a
                 href="/"
                 className="rounded-full border border-zinc-700 px-6 py-3 font-semibold text-white"
               >
-                Back home
+                {t.backHome}
               </a>
             </div>
           </div>
@@ -523,7 +538,7 @@ function QuizPlayContent() {
   if (!currentQuestion) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black text-white">
-        <p className="text-zinc-400">No question available.</p>
+        <p className="text-zinc-400">{t.noQuestion}</p>
       </main>
     );
   }
@@ -532,12 +547,12 @@ function QuizPlayContent() {
     <main className="min-h-screen bg-black px-6 py-10 text-white">
       <section className="mx-auto max-w-4xl">
         <a href="/quiz/custom-mix" className="text-sm text-lime-300">
-          ← Change artists
+          ← {t.changeArtists}
         </a>
 
         <div className="mt-8 flex items-center justify-between">
           <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
-            Audio Quiz
+            {t.audioQuiz}
           </p>
           <p className="text-sm text-zinc-400">{progressText}</p>
         </div>
@@ -557,10 +572,8 @@ function QuizPlayContent() {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">Guess the song title</h1>
-              <p className="mt-2 text-zinc-400">
-                Listen to the preview and choose the correct song.
-              </p>
+              <h1 className="text-3xl font-bold">{t.guessTitle}</h1>
+              <p className="mt-2 text-zinc-400">{t.guessDescription}</p>
 
               <div className="mt-6">
                 <audio
@@ -629,8 +642,8 @@ function QuizPlayContent() {
               </div>
 
               <p className="mt-3 text-sm text-zinc-500">
-                Difficulty: {currentQuestion.difficulty} · Segment starts at:{' '}
-                {previewStartSeconds}s · Preview limit:{' '}
+                {t.difficulty}: {getDifficultyLabel(difficulty, t)} ·{' '}
+                {t.segmentStartsAt}: {previewStartSeconds}s · {t.previewLimit}:{' '}
                 {effectivePreviewDurationSeconds}s
               </p>
             </div>
@@ -676,7 +689,7 @@ function QuizPlayContent() {
 
         <div className="mt-8 flex items-center justify-between">
           <p className="text-xl font-semibold">
-            Score: {score} · Correct: {correctAnswers}
+            {t.score}: {score} · {t.correct}: {correctAnswers}
           </p>
 
           {selectedTrackId !== null && (
@@ -685,7 +698,7 @@ function QuizPlayContent() {
               onClick={nextQuestion}
               className="rounded-full bg-lime-400 px-8 py-3 font-semibold text-black transition hover:bg-lime-300"
             >
-              Next
+              {t.next}
             </button>
           )}
         </div>

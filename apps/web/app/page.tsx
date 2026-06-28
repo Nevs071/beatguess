@@ -1,26 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { API_BASE_URL } from '@/lib/api';
+import { translations } from '@/lib/i18n';
+import { useLanguage } from '@/lib/use-language';
 
-type HealthResponse = {
+type HealthStatus = {
   status: string;
   app: string;
   version: string;
 };
 
-export default function Home() {
-  const [backendStatus, setBackendStatus] = useState<string>('checking...');
+export default function HomePage() {
+  const { language } = useLanguage();
+  const t = translations[language].home;
+
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
+  const [isCheckingBackend, setIsCheckingBackend] = useState(true);
 
   useEffect(() => {
     async function checkBackend() {
       try {
         const response = await fetch(`${API_BASE_URL}/health`);
-        const data: HealthResponse = await response.json();
-        setBackendStatus(`${data.status} - ${data.app} v${data.version}`);
+
+        if (!response.ok) {
+          throw new Error('Backend health check failed');
+        }
+
+        const data: HealthStatus = await response.json();
+        setHealthStatus(data);
       } catch {
-        setBackendStatus('offline');
+        setHealthStatus(null);
+      } finally {
+        setIsCheckingBackend(false);
       }
     }
 
@@ -28,54 +41,58 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <section className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center px-6 text-center">
-        <div className="mb-6 rounded-full border border-lime-400/40 px-4 py-2 text-sm text-lime-300">
-          Full-stack music quiz platform
+    <main className="min-h-screen bg-black px-6 py-10 text-white">
+      <section className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl flex-col items-center justify-center text-center">
+        <div className="rounded-full border border-lime-400/40 bg-lime-400/10 px-6 py-2 text-sm font-semibold text-lime-300">
+          {t.badge}
         </div>
 
-        <h1 className="text-5xl font-bold tracking-tight md:text-7xl">
-          BeatGuess
+        <h1 className="mt-8 text-6xl font-black tracking-tight md:text-8xl">
+          {t.title}
         </h1>
 
-        <p className="mt-6 max-w-2xl text-lg text-zinc-300">
-          Build your own music quiz from your favorite artists, listen to audio
-          previews, and guess the correct songs.
+        <p className="mt-8 max-w-3xl text-xl leading-9 text-zinc-300">
+          {t.subtitle}
         </p>
 
-        <div className="mt-10 grid w-full max-w-3xl gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-            <h2 className="text-xl font-semibold">Artist Search</h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Search artists directly from Deezer.
-            </p>
+        <div className="mt-14 grid w-full max-w-4xl gap-6 md:grid-cols-3">
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
+            <h2 className="text-2xl font-bold">{t.artistSearchTitle}</h2>
+            <p className="mt-4 text-zinc-400">{t.artistSearchDescription}</p>
           </div>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-            <h2 className="text-xl font-semibold">Custom Mix</h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Choose many artists and create your own quiz.
-            </p>
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
+            <h2 className="text-2xl font-bold">{t.customMixTitle}</h2>
+            <p className="mt-4 text-zinc-400">{t.customMixDescription}</p>
           </div>
 
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
-            <h2 className="text-xl font-semibold">Audio Quiz</h2>
-            <p className="mt-2 text-sm text-zinc-400">
-              Guess songs from 30-second previews.
-            </p>
+          <div className="rounded-3xl border border-zinc-800 bg-zinc-950 p-8">
+            <h2 className="text-2xl font-bold">{t.audioQuizTitle}</h2>
+            <p className="mt-4 text-zinc-400">{t.audioQuizDescription}</p>
           </div>
         </div>
 
-        <div className="mt-10 rounded-xl border border-zinc-800 bg-zinc-950 px-5 py-3 text-sm">
-          Backend status:{' '}
-          <span className="font-semibold text-lime-300">{backendStatus}</span>
+        <div className="mt-12 rounded-2xl border border-zinc-800 bg-zinc-950 px-8 py-5">
+          {isCheckingBackend ? (
+            <p className="text-zinc-400">{t.backendChecking}</p>
+          ) : healthStatus ? (
+            <p>
+              {t.backendStatus}:{' '}
+              <span className="font-bold text-lime-300">
+                {healthStatus.status} - {healthStatus.app} v
+                {healthStatus.version}
+              </span>
+            </p>
+          ) : (
+            <p className="text-red-300">{t.backendOffline}</p>
+          )}
         </div>
 
         <Link
           href="/quiz/custom-mix"
-          className="mt-8 rounded-full bg-lime-400 px-8 py-3 font-semibold text-black transition hover:bg-lime-300"
+          className="mt-12 rounded-full bg-lime-400 px-10 py-4 text-lg font-black text-black transition hover:bg-lime-300"
         >
-          Start Custom Mix Quiz
+          {t.customMixButton}
         </Link>
       </section>
     </main>
