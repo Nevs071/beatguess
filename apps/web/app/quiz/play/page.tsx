@@ -1,9 +1,9 @@
-'use client';
+﻿'use client';
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
-import { translations } from '@/lib/i18n';
+import { translations, type Language } from '@/lib/i18n';
 import { useLanguage } from '@/lib/use-language';
 import { usePlayer } from '@/lib/use-player';
 import { saveScoreHistoryItem } from '@/lib/score-history';
@@ -89,6 +89,18 @@ function getDifficultyLabel(difficulty: Difficulty, t: QuizPlayTranslations) {
   return t.easy;
 }
 
+function getSavedForText(playerName: string, language: Language) {
+  if (language === 'fr') {
+    return `Sauvegardé pour ${playerName}`;
+  }
+
+  if (language === 'de') {
+    return `Gespeichert für ${playerName}`;
+  }
+
+  return `Saved for ${playerName}`;
+}
+
 function getResultRank(accuracy: number, t: QuizPlayTranslations) {
   if (accuracy === 100) {
     return {
@@ -156,9 +168,8 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
 function QuizPlayContent() {
   const searchParams = useSearchParams();
   const { language } = useLanguage();
-  const t = translations[language].quizPlay;
   const { player } = usePlayer();
-
+  const t = translations[language].quizPlay;
 
   const artistIdsParam = searchParams.get('artists');
   const difficultyParam = searchParams.get('difficulty');
@@ -219,34 +230,6 @@ function QuizPlayContent() {
       : 0;
 
   const resultRank = getResultRank(accuracy, t);
-  useEffect(() => {
-  if (!isFinished || questions.length === 0 || resultSavedRef.current) {
-    return;
-  }
-
-  resultSavedRef.current = true;
-
-  saveScoreHistoryItem({
-    id: crypto.randomUUID(),
-    playerName: player?.name ?? 'Guest',
-    score,
-    correctAnswers,
-    totalQuestions: questions.length,
-    accuracy,
-    difficulty,
-    rankTitle: resultRank.title,
-    createdAt: new Date().toISOString(),
-  });
-}, [
-  isFinished,
-  questions.length,
-  player?.name,
-  score,
-  correctAnswers,
-  accuracy,
-  difficulty,
-  resultRank.title,
-]);
 
   const progressText = useMemo(() => {
     if (questions.length === 0) {
@@ -315,6 +298,7 @@ function QuizPlayContent() {
 
         savePlayedTrackSegments(limitedHistory);
 
+        resultSavedRef.current = false;
         setQuestions(generatedQuestions);
         setCurrentQuestionIndex(0);
         setSelectedTrackId(null);
@@ -333,6 +317,35 @@ function QuizPlayContent() {
 
     loadQuiz();
   }, [artistIdsParam, difficulty, questionAmount]);
+
+  useEffect(() => {
+    if (!isFinished || questions.length === 0 || resultSavedRef.current) {
+      return;
+    }
+
+    resultSavedRef.current = true;
+
+    saveScoreHistoryItem({
+      id: crypto.randomUUID(),
+      playerName: player?.name ?? 'Guest',
+      score,
+      correctAnswers,
+      totalQuestions: questions.length,
+      accuracy,
+      difficulty,
+      rankTitle: resultRank.title,
+      createdAt: new Date().toISOString(),
+    });
+  }, [
+    isFinished,
+    questions.length,
+    player?.name,
+    score,
+    correctAnswers,
+    accuracy,
+    difficulty,
+    resultRank.title,
+  ]);
 
   function formatTime(seconds: number) {
     const safeSeconds = Math.max(0, seconds);
@@ -463,10 +476,10 @@ function QuizPlayContent() {
             </h1>
 
             <p className="mt-3 text-zinc-400">{resultRank.description}</p>
-	    <p className="mt-3 text-sm text-lime-300">
-  Saved for {player?.name ?? 'Guest'}
-</p>
- 		
+
+            <p className="mt-3 text-sm text-lime-300">
+              {getSavedForText(player?.name ?? 'Guest', language)}
+            </p>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-zinc-800 bg-black p-5">
@@ -557,6 +570,13 @@ function QuizPlayContent() {
                 className="rounded-full bg-lime-400 px-6 py-3 font-semibold text-black"
               >
                 {t.playAnother}
+              </a>
+
+              <a
+                href="/scores"
+                className="rounded-full border border-lime-400 px-6 py-3 font-semibold text-lime-300"
+              >
+                Scores
               </a>
 
               <a

@@ -1,4 +1,4 @@
-export type ScoreHistoryItem = {
+﻿export type ScoreHistoryItem = {
   id: string;
   playerName: string;
   score: number;
