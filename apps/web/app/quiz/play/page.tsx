@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
 import { translations } from '@/lib/i18n';
 import { useLanguage } from '@/lib/use-language';
+import { usePlayer } from '@/lib/use-player';
+import { saveScoreHistoryItem } from '@/lib/score-history';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -155,6 +157,8 @@ function QuizPlayContent() {
   const searchParams = useSearchParams();
   const { language } = useLanguage();
   const t = translations[language].quizPlay;
+  const { player } = usePlayer();
+
 
   const artistIdsParam = searchParams.get('artists');
   const difficultyParam = searchParams.get('difficulty');
@@ -171,6 +175,7 @@ function QuizPlayContent() {
       : 'easy';
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const resultSavedRef = useRef(false);
 
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -214,6 +219,34 @@ function QuizPlayContent() {
       : 0;
 
   const resultRank = getResultRank(accuracy, t);
+  useEffect(() => {
+  if (!isFinished || questions.length === 0 || resultSavedRef.current) {
+    return;
+  }
+
+  resultSavedRef.current = true;
+
+  saveScoreHistoryItem({
+    id: crypto.randomUUID(),
+    playerName: player?.name ?? 'Guest',
+    score,
+    correctAnswers,
+    totalQuestions: questions.length,
+    accuracy,
+    difficulty,
+    rankTitle: resultRank.title,
+    createdAt: new Date().toISOString(),
+  });
+}, [
+  isFinished,
+  questions.length,
+  player?.name,
+  score,
+  correctAnswers,
+  accuracy,
+  difficulty,
+  resultRank.title,
+]);
 
   const progressText = useMemo(() => {
     if (questions.length === 0) {
@@ -430,6 +463,10 @@ function QuizPlayContent() {
             </h1>
 
             <p className="mt-3 text-zinc-400">{resultRank.description}</p>
+	    <p className="mt-3 text-sm text-lime-300">
+  Saved for {player?.name ?? 'Guest'}
+</p>
+ 		
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-zinc-800 bg-black p-5">
