@@ -9,6 +9,9 @@ import { usePlayer } from '@/lib/use-player';
 import { saveScoreHistoryItem } from '@/lib/score-history';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
+type AnswerMode = 'mcq' | 'typed';
+
+type TypedAnswerStatus = 'correct' | 'wrong' | null;
 
 type PlayedTrackSegments = Record<string, number[]>;
 
@@ -45,6 +48,14 @@ type AnswerResult = {
 type QuizPlayTranslations = (typeof translations)[Language]['quizPlay'];
 
 const PLAYED_TRACK_SEGMENTS_STORAGE_KEY = 'beatguess-played-track-segments';
+function normalizeTypedAnswer(answer: string) {
+  return answer
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+    .trim();
+}
 
 function readPlayedTrackSegments(): PlayedTrackSegments {
   try {
@@ -174,6 +185,7 @@ function QuizPlayContent() {
   const artistIdsParam = searchParams.get('artists');
   const difficultyParam = searchParams.get('difficulty');
   const amountParam = searchParams.get('amount');
+  const answerModeParam = searchParams.get('answerMode');
 
   const parsedAmount = amountParam ? Number(amountParam) : 10;
   const questionAmount = [5, 10, 15, 20].includes(parsedAmount)
@@ -184,6 +196,7 @@ function QuizPlayContent() {
     difficultyParam === 'medium' || difficultyParam === 'hard'
       ? difficultyParam
       : 'easy';
+      const answerMode: AnswerMode = answerModeParam === 'typed' ? 'typed' : 'mcq';
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resultSavedRef = useRef(false);
@@ -199,8 +212,15 @@ function QuizPlayContent() {
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [typedAnswer, setTypedAnswer] = useState('');
+const [typedAnswerStatus, setTypedAnswerStatus] =
+  useState<TypedAnswerStatus>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
+  const currentCorrectOption =
+  currentQuestion?.options.find(
+    (option) => option.id === currentQuestion.correctTrackId,
+  ) ?? null;
 
   const previewStartSeconds = currentQuestion?.previewStartSeconds ?? 0;
 
@@ -308,6 +328,8 @@ function QuizPlayContent() {
         setAudioCurrentTime(0);
         setAudioDuration(0);
         setIsAudioPlaying(false);
+        setTypedAnswer('');
+        setTypedAnswerStatus(null);
       } catch {
         setHasError(true);
       } finally {
@@ -316,8 +338,7 @@ function QuizPlayContent() {
     }
 
     loadQuiz();
-  }, [artistIdsParam, difficulty, questionAmount]);
-
+  }, [artistIdsParam, difficulty, questionAmount, answerMode]);
   useEffect(() => {
     if (!isFinished || questions.length === 0 || resultSavedRef.current) {
       return;
@@ -418,6 +439,41 @@ function QuizPlayContent() {
       setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
     }
   }
+  function submitTypedAnswer() {
+  if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
+    return;
+  }
+
+  const cleanTypedAnswer = typedAnswer.trim();
+
+  if (!cleanTypedAnswer) {
+    return;
+  }
+
+  const isCorrect =
+    normalizeTypedAnswer(cleanTypedAnswer) ===
+    normalizeTypedAnswer(currentCorrectOption.title);
+
+  setSelectedTrackId(currentQuestion.correctTrackId);
+  setTypedAnswerStatus(isCorrect ? 'correct' : 'wrong');
+
+  setAnswerResults((currentResults) => [
+    ...currentResults,
+    {
+      questionId: currentQuestion.id,
+      selectedTitle: cleanTypedAnswer,
+      selectedArtistName: '',
+      correctTitle: currentCorrectOption.title,
+      correctArtistName: currentCorrectOption.artistName,
+      isCorrect,
+    },
+  ]);
+
+  if (isCorrect) {
+    setScore((currentScore) => currentScore + 100);
+    setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
+  }
+}
 
   function nextQuestion() {
     const audio = audioRef.current;
@@ -431,6 +487,8 @@ function QuizPlayContent() {
     setAudioDuration(0);
     setIsAudioPlaying(false);
     setSelectedTrackId(null);
+    setTypedAnswer('');
+    setTypedAnswerStatus(null);
     setCurrentQuestionIndex((currentIndex) => currentIndex + 1);
   }
 
@@ -546,11 +604,11 @@ function QuizPlayContent() {
 
                     <p className="mt-3 text-sm text-zinc-400">{t.yourAnswer}</p>
                     <p className="font-semibold text-white">
-                      {answer.selectedTitle}{' '}
-                      <span className="text-zinc-500">
-                        — {answer.selectedArtistName}
-                      </span>
-                    </p>
+  {answer.selectedTitle}
+  {answer.selectedArtistName && (
+    <span className="text-zinc-500"> — {answer.selectedArtistName}</span>
+  )}
+</p>
                   </div>
                 ))}
               </div>
@@ -629,8 +687,13 @@ function QuizPlayContent() {
             </div>
 
             <div className="flex-1">
-              <h1 className="text-3xl font-bold">{t.guessTitle}</h1>
-              <p className="mt-2 text-zinc-400">{t.guessDescription}</p>
+              <h1 className="text-3xl font-bold">
+  {answerMode === 'typed' ? t.typeSongTitle : t.guessTitle}
+</h1>
+
+<p className="mt-2 text-zinc-400">
+  {answerMode === 'typed' ? t.typeSongDescription : t.guessDescription}
+</p>
 
               <div className="mt-6">
                 <audio
@@ -707,42 +770,94 @@ function QuizPlayContent() {
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {currentQuestion.options.map((option) => {
-            const isSelected = selectedTrackId === option.id;
-            const isCorrect = option.id === currentQuestion.correctTrackId;
-            const showResult = selectedTrackId !== null;
+       {answerMode === 'mcq' ? (
+  <div className="mt-6 grid gap-4 md:grid-cols-2">
+    {currentQuestion.options.map((option) => {
+      const isSelected = selectedTrackId === option.id;
+      const isCorrect = option.id === currentQuestion.correctTrackId;
+      const showResult = selectedTrackId !== null;
 
-            let resultClass =
-              'border-zinc-800 bg-zinc-950 hover:border-lime-400';
+      let resultClass =
+        'border-zinc-800 bg-zinc-950 hover:border-lime-400';
 
-            if (showResult && isCorrect) {
-              resultClass = 'border-lime-400 bg-lime-400/20';
-            }
+      if (showResult && isCorrect) {
+        resultClass = 'border-lime-400 bg-lime-400/20';
+      }
 
-            if (showResult && isSelected && !isCorrect) {
-              resultClass = 'border-red-400 bg-red-500/20';
-            }
+      if (showResult && isSelected && !isCorrect) {
+        resultClass = 'border-red-400 bg-red-500/20';
+      }
 
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => answerQuestion(option.id)}
-                disabled={showResult}
-                className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
-              >
-                <h2 className="text-lg font-semibold">{option.title}</h2>
+      return (
+        <button
+          key={option.id}
+          type="button"
+          onClick={() => answerQuestion(option.id)}
+          disabled={showResult}
+          className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
+        >
+          <h2 className="text-lg font-semibold">{option.title}</h2>
 
-                {showResult && (
-                  <p className="mt-1 text-sm text-zinc-400">
-                    {option.artistName}
-                  </p>
-                )}
-              </button>
-            );
-          })}
-        </div>
+          {showResult && (
+            <p className="mt-1 text-sm text-zinc-400">
+              {option.artistName}
+            </p>
+          )}
+        </button>
+      );
+    })}
+  </div>
+) : (
+  <div className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
+      {t.typeYourAnswer}
+    </p>
+
+    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+      <input
+        value={typedAnswer}
+        onChange={(event) => setTypedAnswer(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            submitTypedAnswer();
+          }
+        }}
+        disabled={selectedTrackId !== null}
+        placeholder={t.typedAnswerPlaceholder}
+        className="flex-1 rounded-2xl border border-zinc-800 bg-black px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-lime-400 disabled:cursor-not-allowed disabled:opacity-60"
+      />
+
+      <button
+        type="button"
+        onClick={submitTypedAnswer}
+        disabled={!typedAnswer.trim() || selectedTrackId !== null}
+        className="rounded-2xl bg-lime-400 px-6 py-4 font-black text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-40"
+      >
+        {t.submitAnswer}
+      </button>
+    </div>
+
+    {typedAnswerStatus && (
+      <div
+        className={`mt-4 rounded-2xl border p-4 ${
+          typedAnswerStatus === 'correct'
+            ? 'border-lime-400/40 bg-lime-400/10 text-lime-200'
+            : 'border-red-400/40 bg-red-500/10 text-red-200'
+        }`}
+      >
+        <p className="font-bold">
+          {typedAnswerStatus === 'correct' ? t.typedCorrect : t.typedWrong}
+        </p>
+
+        {typedAnswerStatus === 'wrong' && currentCorrectOption && (
+          <p className="mt-2 text-sm">
+            {t.correctWas}: {currentCorrectOption.title}
+          </p>
+        )}
+      </div>
+    )}
+  </div>
+)}
 
         <div className="mt-8 flex items-center justify-between">
           <p className="text-xl font-semibold">

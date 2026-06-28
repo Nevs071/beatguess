@@ -97,8 +97,8 @@ export default function CustomMixPage() {
     const artistIds = selectedArtists.map((artist) => artist.id).join(',');
 
     router.push(
-      `/quiz/play?artists=${artistIds}&difficulty=${difficulty}&amount=${questionAmount}`,
-    );
+  `/quiz/play?artists=${artistIds}&difficulty=${difficulty}&amount=${questionAmount}&answerMode=${answerMode}`,
+);
   }
 
   const difficultyDescription =
