@@ -10,6 +10,8 @@ import { saveScoreHistoryItem } from '@/lib/score-history';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type AnswerMode = 'mcq' | 'typed';
+type TypedAnswerKind = 'song' | 'artist' | 'album' | 'mixed';
+type ActiveTypedAnswerKind = 'song' | 'artist' | 'album';
 
 type TypedAnswerStatus = 'correct' | 'wrong' | null;
 
@@ -19,6 +21,7 @@ type QuizOption = {
   id: number;
   title: string;
   artistName: string;
+  albumTitle: string;
 };
 
 type QuizQuestion = {
@@ -55,6 +58,46 @@ function normalizeTypedAnswer(answer: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]/g, '')
     .trim();
+}
+function getStableRandomIndex(seed: string, max: number) {
+  let hash = 0;
+
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0;
+  }
+
+  return hash % max;
+}
+
+function getActiveTypedAnswerKind(
+  typedAnswerKind: TypedAnswerKind,
+  currentQuestion: QuizQuestion | undefined,
+  questionIndex: number,
+): ActiveTypedAnswerKind {
+  if (typedAnswerKind !== 'mixed') {
+    return typedAnswerKind;
+  }
+
+  const mixedKinds: ActiveTypedAnswerKind[] = ['song', 'artist', 'album'];
+  const seed = currentQuestion?.id ?? `question-${questionIndex}`;
+
+  return mixedKinds[getStableRandomIndex(seed, mixedKinds.length)];
+}
+
+function getTypedCorrectAnswer(
+  answerKind: ActiveTypedAnswerKind,
+  currentQuestion: QuizQuestion,
+  currentCorrectOption: QuizOption,
+) {
+  if (answerKind === 'artist') {
+    return currentQuestion.artistName || currentCorrectOption.artistName;
+  }
+
+  if (answerKind === 'album') {
+    return currentQuestion.albumTitle;
+  }
+
+  return currentCorrectOption.title;
 }
 
 function readPlayedTrackSegments(): PlayedTrackSegments {
@@ -186,6 +229,7 @@ function QuizPlayContent() {
   const difficultyParam = searchParams.get('difficulty');
   const amountParam = searchParams.get('amount');
   const answerModeParam = searchParams.get('answerMode');
+  const typedAnswerKindParam = searchParams.get('typedAnswerKind');
 
   const parsedAmount = amountParam ? Number(amountParam) : 10;
   const questionAmount = [5, 10, 15, 20].includes(parsedAmount)
@@ -197,6 +241,12 @@ function QuizPlayContent() {
       ? difficultyParam
       : 'easy';
       const answerMode: AnswerMode = answerModeParam === 'typed' ? 'typed' : 'mcq';
+      const typedAnswerKind: TypedAnswerKind =
+  typedAnswerKindParam === 'artist' ||
+  typedAnswerKindParam === 'album' ||
+  typedAnswerKindParam === 'mixed'
+    ? typedAnswerKindParam
+    : 'song';
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resultSavedRef = useRef(false);
@@ -217,10 +267,24 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
   useState<TypedAnswerStatus>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
+  const activeTypedAnswerKind = getActiveTypedAnswerKind(
+  typedAnswerKind,
+  currentQuestion,
+  currentQuestionIndex,
+);
+  
   const currentCorrectOption =
   currentQuestion?.options.find(
     (option) => option.id === currentQuestion.correctTrackId,
   ) ?? null;
+  const currentTypedCorrectAnswer =
+  currentQuestion && currentCorrectOption
+    ? getTypedCorrectAnswer(
+        activeTypedAnswerKind,
+        currentQuestion,
+        currentCorrectOption,
+      )
+    : '';
 
   const previewStartSeconds = currentQuestion?.previewStartSeconds ?? 0;
 
@@ -338,7 +402,7 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
     }
 
     loadQuiz();
-  }, [artistIdsParam, difficulty, questionAmount, answerMode]);
+  }, [artistIdsParam, difficulty, questionAmount, answerMode, typedAnswerKind]);
   useEffect(() => {
     if (!isFinished || questions.length === 0 || resultSavedRef.current) {
       return;
@@ -428,8 +492,9 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
         questionId: currentQuestion.id,
         selectedTitle: selectedOption.title,
         selectedArtistName: selectedOption.artistName,
-        correctTitle: correctOption.title,
-        correctArtistName: correctOption.artistName,
+        correctTitle: currentTypedCorrectAnswer,
+correctArtistName:
+  activeTypedAnswerKind === 'artist' ? '' : currentQuestion.artistName,
         isCorrect,
       },
     ]);
@@ -450,9 +515,13 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
     return;
   }
 
-  const isCorrect =
-    normalizeTypedAnswer(cleanTypedAnswer) ===
-    normalizeTypedAnswer(currentCorrectOption.title);
+ if (!currentTypedCorrectAnswer) {
+  return;
+}
+
+const isCorrect =
+  normalizeTypedAnswer(cleanTypedAnswer) ===
+  normalizeTypedAnswer(currentTypedCorrectAnswer);
 
   setSelectedTrackId(currentQuestion.correctTrackId);
   setTypedAnswerStatus(isCorrect ? 'correct' : 'wrong');
@@ -595,12 +664,12 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
                     <p className="mt-3 text-sm text-zinc-400">
                       {t.correctAnswer}
                     </p>
-                    <p className="font-semibold text-white">
-                      {answer.correctTitle}{' '}
-                      <span className="text-zinc-500">
-                        — {answer.correctArtistName}
-                      </span>
-                    </p>
+                   <p className="font-semibold text-white">
+  {answer.correctTitle}
+  {answer.correctArtistName && (
+    <span className="text-zinc-500"> — {answer.correctArtistName}</span>
+  )}
+</p>
 
                     <p className="mt-3 text-sm text-zinc-400">{t.yourAnswer}</p>
                     <p className="font-semibold text-white">
@@ -688,11 +757,23 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
 
             <div className="flex-1">
               <h1 className="text-3xl font-bold">
-  {answerMode === 'typed' ? t.typeSongTitle : t.guessTitle}
+  {answerMode === 'typed'
+    ? activeTypedAnswerKind === 'artist'
+      ? t.typeArtistTitle
+      : activeTypedAnswerKind === 'album'
+        ? t.typeAlbumTitle
+        : t.typeSongTitle
+    : t.guessTitle}
 </h1>
 
 <p className="mt-2 text-zinc-400">
-  {answerMode === 'typed' ? t.typeSongDescription : t.guessDescription}
+  {answerMode === 'typed'
+    ? activeTypedAnswerKind === 'artist'
+      ? t.typeArtistDescription
+      : activeTypedAnswerKind === 'album'
+        ? t.typeAlbumDescription
+        : t.typeSongDescription
+    : t.guessDescription}
 </p>
 
               <div className="mt-6">
@@ -823,7 +904,13 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
           }
         }}
         disabled={selectedTrackId !== null}
-        placeholder={t.typedAnswerPlaceholder}
+        placeholder={
+  activeTypedAnswerKind === 'artist'
+    ? t.typedArtistPlaceholder
+    : activeTypedAnswerKind === 'album'
+      ? t.typedAlbumPlaceholder
+      : t.typedAnswerPlaceholder
+}
         className="flex-1 rounded-2xl border border-zinc-800 bg-black px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-lime-400 disabled:cursor-not-allowed disabled:opacity-60"
       />
 
@@ -851,7 +938,7 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
 
         {typedAnswerStatus === 'wrong' && currentCorrectOption && (
           <p className="mt-2 text-sm">
-            {t.correctWas}: {currentCorrectOption.title}
+           {t.correctWas}: {currentTypedCorrectAnswer}
           </p>
         )}
       </div>

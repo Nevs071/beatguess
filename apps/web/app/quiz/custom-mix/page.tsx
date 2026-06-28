@@ -17,6 +17,7 @@ type Artist = {
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type AnswerMode = 'mcq' | 'typed';
+type TypedAnswerKind = 'song' | 'artist' | 'album' | 'mixed';
 
 export default function CustomMixPage() {
   const router = useRouter();
@@ -32,6 +33,8 @@ export default function CustomMixPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [answerMode, setAnswerMode] = useState<AnswerMode>('mcq');
+  const [typedAnswerKind, setTypedAnswerKind] =
+  useState<TypedAnswerKind>('song');
 
   async function searchArtists() {
     if (query.trim().length < 2) {
@@ -97,7 +100,7 @@ export default function CustomMixPage() {
     const artistIds = selectedArtists.map((artist) => artist.id).join(',');
 
     router.push(
-  `/quiz/play?artists=${artistIds}&difficulty=${difficulty}&amount=${questionAmount}&answerMode=${answerMode}`,
+  `/quiz/play?artists=${artistIds}&difficulty=${difficulty}&amount=${questionAmount}&answerMode=${answerMode}&typedAnswerKind=${typedAnswerKind}`,
 );
   }
 
@@ -336,11 +339,39 @@ export default function CustomMixPage() {
             <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-5 md:p-6">
               <h2 className="text-2xl font-bold">{t.gameSetup}</h2>
 
-              <div className="mt-6">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
-                  {t.quizLength}
-                </p>
-                  <div className="mt-6">
+         <div className="mt-6">
+  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
+    {t.quizLength}
+  </p>
+
+  <div className="mt-3 grid grid-cols-2 gap-3">
+    {[5, 10, 15, 20].map((amount) => (
+      <button
+        key={amount}
+        type="button"
+        onClick={() => setQuestionAmount(amount)}
+        className={`rounded-2xl border p-4 text-left transition ${
+          questionAmount === amount
+            ? 'border-lime-400 bg-lime-400/10'
+            : 'border-zinc-800 bg-black hover:border-lime-400'
+        }`}
+      >
+        <h3 className="font-bold">{amount}</h3>
+        <p className="mt-1 text-xs text-zinc-400">
+          {amount === 5
+            ? t.quick
+            : amount === 10
+              ? t.standard
+              : amount === 15
+                ? t.long
+                : t.challenge}
+        </p>
+      </button>
+    ))}
+  </div>
+</div>
+
+<div className="mt-6">
   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
     {t.answerMode}
   </p>
@@ -384,32 +415,63 @@ export default function CustomMixPage() {
     ))}
   </div>
 </div>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  {[5, 10, 15, 20].map((amount) => (
-                    <button
-                      key={amount}
-                      type="button"
-                      onClick={() => setQuestionAmount(amount)}
-                      className={`rounded-2xl border p-4 text-left transition ${
-                        questionAmount === amount
-                          ? 'border-lime-400 bg-lime-400/10'
-                          : 'border-zinc-800 bg-black hover:border-lime-400'
-                      }`}
-                    >
-                      <h3 className="font-bold">{amount}</h3>
-                      <p className="mt-1 text-xs text-zinc-400">
-                        {amount === 5
-                          ? t.quick
-                          : amount === 10
-                            ? t.standard
-                            : amount === 15
-                              ? t.long
-                              : t.challenge}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
+
+{answerMode === 'typed' && (
+  <div className="mt-6">
+    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
+      {t.typingQuestionType}
+    </p>
+
+    <div className="mt-3 grid gap-3">
+      {[
+        {
+          value: 'song',
+          label: t.typeSongTitleOption,
+          description: t.typeSongTitleDescription,
+        },
+        {
+          value: 'artist',
+          label: t.typeArtistNameOption,
+          description: t.typeArtistNameDescription,
+        },
+        {
+          value: 'album',
+          label: t.typeAlbumNameOption,
+          description: t.typeAlbumNameDescription,
+        },
+        {
+          value: 'mixed',
+          label: t.mixedTypingOption,
+          description: t.mixedTypingDescription,
+        },
+      ].map((kind) => (
+        <button
+          key={kind.value}
+          type="button"
+          onClick={() => setTypedAnswerKind(kind.value as TypedAnswerKind)}
+          className={`w-full rounded-2xl border p-4 text-left transition ${
+            typedAnswerKind === kind.value
+              ? 'border-lime-400 bg-lime-400/10'
+              : 'border-zinc-800 bg-black hover:border-lime-400'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="font-bold">{kind.label}</h3>
+              <p className="mt-1 text-sm text-zinc-400">
+                {kind.description}
+              </p>
+            </div>
+
+            {typedAnswerKind === kind.value && (
+              <span className="text-lime-300">●</span>
+            )}
+          </div>
+        </button>
+      ))}
+    </div>
+  </div>
+)}
 
               <div className="mt-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-500">
