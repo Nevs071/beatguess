@@ -5,6 +5,7 @@ type GenerateQuizBody = {
   artistIds: number[];
   amount?: number;
   difficulty?: 'easy' | 'medium' | 'hard';
+  playedTrackSegments?: Record<string, number[]>;
 };
 
 @Controller('quiz')
@@ -26,9 +27,10 @@ export class QuizController {
     }
 
     return this.quizService.generateQuiz(
-  artistIds,
-  body.amount ?? 10,
-  body.difficulty ?? 'easy',
-);
+      artistIds,
+      body.amount ?? 10,
+      body.difficulty ?? 'easy',
+      body.playedTrackSegments ?? {},
+    );
   }
 }

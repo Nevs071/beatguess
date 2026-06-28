@@ -6,6 +6,8 @@ import { API_BASE_URL } from '@/lib/api';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
+type PlayedTrackSegments = Record<string, number[]>;
+
 type QuizOption = {
   id: number;
   title: string;
@@ -16,6 +18,7 @@ type QuizQuestion = {
   id: string;
   type: 'guess_song_from_audio';
   difficulty: Difficulty;
+  previewStartSeconds: number;
   previewDurationSeconds: number;
   preview: string;
   cover: string;
@@ -34,6 +37,39 @@ type AnswerResult = {
   correctArtistName: string;
   isCorrect: boolean;
 };
+
+const PLAYED_TRACK_SEGMENTS_STORAGE_KEY = 'beatguess-played-track-segments';
+
+function readPlayedTrackSegments(): PlayedTrackSegments {
+  try {
+    const rawValue = localStorage.getItem(PLAYED_TRACK_SEGMENTS_STORAGE_KEY);
+
+    if (!rawValue) {
+      return {};
+    }
+
+    const parsedValue = JSON.parse(rawValue);
+
+    if (
+      typeof parsedValue !== 'object' ||
+      parsedValue === null ||
+      Array.isArray(parsedValue)
+    ) {
+      return {};
+    }
+
+    return parsedValue as PlayedTrackSegments;
+  } catch {
+    return {};
+  }
+}
+
+function savePlayedTrackSegments(playedTrackSegments: PlayedTrackSegments) {
+  localStorage.setItem(
+    PLAYED_TRACK_SEGMENTS_STORAGE_KEY,
+    JSON.stringify(playedTrackSegments),
+  );
+}
 
 function getResultRank(accuracy: number) {
   if (accuracy === 100) {
@@ -131,18 +167,23 @@ function QuizPlayContent() {
 
   const currentQuestion = questions[currentQuestionIndex];
 
-  const previewLimitSeconds =
+  const previewStartSeconds = currentQuestion?.previewStartSeconds ?? 0;
+
+  const basePreviewDurationSeconds =
     currentQuestion?.previewDurationSeconds ??
     (difficulty === 'hard' ? 10 : difficulty === 'medium' ? 20 : 30);
 
-  const effectivePreviewLimitSeconds =
+  const effectivePreviewDurationSeconds =
     difficulty === 'easy' && audioDuration > 0
-      ? Math.min(previewLimitSeconds, Math.floor(audioDuration))
-      : previewLimitSeconds;
+      ? Math.max(1, Math.floor(audioDuration - previewStartSeconds))
+      : basePreviewDurationSeconds;
+
+  const previewEndSeconds =
+    previewStartSeconds + effectivePreviewDurationSeconds;
 
   const displayedCurrentTime = Math.min(
-    Math.floor(audioCurrentTime),
-    effectivePreviewLimitSeconds,
+    Math.max(Math.floor(audioCurrentTime - previewStartSeconds), 0),
+    effectivePreviewDurationSeconds,
   );
 
   const isFinished =
@@ -182,6 +223,8 @@ function QuizPlayContent() {
           .map((id) => Number(id))
           .filter(Boolean);
 
+        const playedTrackSegments = readPlayedTrackSegments();
+
         const response = await fetch(`${API_BASE_URL}/quiz/generate`, {
           method: 'POST',
           headers: {
@@ -191,6 +234,7 @@ function QuizPlayContent() {
             artistIds,
             amount: questionAmount,
             difficulty,
+            playedTrackSegments,
           }),
         });
 
@@ -199,6 +243,28 @@ function QuizPlayContent() {
         }
 
         const generatedQuestions: QuizQuestion[] = await response.json();
+
+        const updatedPlayedTrackSegments: PlayedTrackSegments = {
+          ...playedTrackSegments,
+        };
+
+        generatedQuestions.forEach((question) => {
+          const trackId = String(question.correctTrackId);
+          const previousSegments = updatedPlayedTrackSegments[trackId] ?? [];
+
+          updatedPlayedTrackSegments[trackId] = Array.from(
+            new Set([
+              ...previousSegments,
+              question.previewStartSeconds ?? 0,
+            ]),
+          );
+        });
+
+        const limitedHistory = Object.fromEntries(
+          Object.entries(updatedPlayedTrackSegments).slice(-500),
+        );
+
+        savePlayedTrackSegments(limitedHistory);
 
         setQuestions(generatedQuestions);
         setCurrentQuestionIndex(0);
@@ -234,9 +300,13 @@ function QuizPlayContent() {
       return;
     }
 
-    if (audio.currentTime >= effectivePreviewLimitSeconds) {
-      audio.currentTime = 0;
-      setAudioCurrentTime(0);
+    if (
+      audio.currentTime < previewStartSeconds ||
+      audio.currentTime >= previewEndSeconds ||
+      audio.ended
+    ) {
+      audio.currentTime = previewStartSeconds;
+      setAudioCurrentTime(previewStartSeconds);
     }
 
     if (audio.paused) {
@@ -498,17 +568,19 @@ function QuizPlayContent() {
                   key={currentQuestion.id}
                   src={currentQuestion.preview}
                   onLoadedMetadata={(event) => {
-                    setAudioDuration(event.currentTarget.duration);
-                    setAudioCurrentTime(0);
+                    const audio = event.currentTarget;
+
+                    setAudioDuration(audio.duration);
+                    audio.currentTime = previewStartSeconds;
+                    setAudioCurrentTime(previewStartSeconds);
                     setIsAudioPlaying(false);
                   }}
                   onTimeUpdate={(event) => {
                     const audio = event.currentTarget;
 
-                    if (audio.currentTime >= effectivePreviewLimitSeconds) {
+                    if (audio.currentTime >= previewEndSeconds) {
                       audio.pause();
-                      audio.currentTime = effectivePreviewLimitSeconds;
-                      setAudioCurrentTime(effectivePreviewLimitSeconds);
+                      setAudioCurrentTime(previewEndSeconds);
                       setIsAudioPlaying(false);
                       return;
                     }
@@ -516,6 +588,7 @@ function QuizPlayContent() {
                     setAudioCurrentTime(audio.currentTime);
                   }}
                   onEnded={() => {
+                    setAudioCurrentTime(previewEndSeconds);
                     setIsAudioPlaying(false);
                   }}
                 />
@@ -536,9 +609,9 @@ function QuizPlayContent() {
                           className="h-full bg-lime-400 transition-all"
                           style={{
                             width: `${
-                              effectivePreviewLimitSeconds > 0
+                              effectivePreviewDurationSeconds > 0
                                 ? (displayedCurrentTime /
-                                    effectivePreviewLimitSeconds) *
+                                    effectivePreviewDurationSeconds) *
                                   100
                                 : 0
                             }%`,
@@ -549,15 +622,16 @@ function QuizPlayContent() {
 
                     <p className="min-w-[90px] text-right text-sm text-zinc-300">
                       {formatTime(displayedCurrentTime)} /{' '}
-                      {formatTime(effectivePreviewLimitSeconds)}
+                      {formatTime(effectivePreviewDurationSeconds)}
                     </p>
                   </div>
                 </div>
               </div>
 
               <p className="mt-3 text-sm text-zinc-500">
-                Difficulty: {currentQuestion.difficulty} · Preview limit:{' '}
-                {effectivePreviewLimitSeconds}s
+                Difficulty: {currentQuestion.difficulty} · Segment starts at:{' '}
+                {previewStartSeconds}s · Preview limit:{' '}
+                {effectivePreviewDurationSeconds}s
               </p>
             </div>
           </div>

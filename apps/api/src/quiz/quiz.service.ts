@@ -3,6 +3,8 @@ import { MusicService } from '../music/music.service';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
+type PlayedTrackSegments = Record<string, number[]>;
+
 type Track = {
   id: number;
   title: string;
@@ -27,6 +29,7 @@ type QuizQuestion = {
   id: string;
   type: 'guess_song_from_audio';
   difficulty: Difficulty;
+  previewStartSeconds: number;
   previewDurationSeconds: number;
   preview: string;
   cover: string;
@@ -45,6 +48,7 @@ export class QuizService {
     artistIds: number[],
     amount = 10,
     difficulty: Difficulty = 'easy',
+    playedTrackSegments: PlayedTrackSegments = {},
   ): Promise<QuizQuestion[]> {
     if (!artistIds || artistIds.length === 0) {
       throw new BadRequestException('At least one artist is required');
@@ -70,9 +74,41 @@ export class QuizService {
       );
     }
 
-    const selectedTracks = this.shuffleArray(uniqueTracks).slice(
+    const possibleStartSeconds =
+      this.getPossiblePreviewStartSeconds(difficulty);
+
+    const freshTracks = uniqueTracks.filter((track) => {
+      const usedSegments = playedTrackSegments[String(track.id)] ?? [];
+      return usedSegments.length === 0;
+    });
+
+    const replayableTracks = uniqueTracks.filter((track) => {
+      const usedSegments = playedTrackSegments[String(track.id)] ?? [];
+
+      if (usedSegments.length === 0) {
+        return false;
+      }
+
+      return possibleStartSeconds.some(
+        (startSecond) => !usedSegments.includes(startSecond),
+      );
+    });
+
+    const preferredTracks = this.removeDuplicateTracks([
+      ...freshTracks,
+      ...replayableTracks,
+    ]);
+
+    const minimumNeededTracks = Math.min(safeAmount, uniqueTracks.length);
+
+    const questionPool =
+      preferredTracks.length >= minimumNeededTracks
+        ? preferredTracks
+        : uniqueTracks;
+
+    const selectedTracks = this.shuffleArray(questionPool).slice(
       0,
-      Math.min(safeAmount, uniqueTracks.length),
+      Math.min(safeAmount, questionPool.length),
     );
 
     return selectedTracks.map((correctTrack, index) => {
@@ -90,8 +126,13 @@ export class QuizService {
 
       return {
         id: `question-${index + 1}-${correctTrack.id}`,
-        type: 'guess_song_from_audio',
+        type: 'guess_song_from_audio' as const,
         difficulty,
+        previewStartSeconds: this.getPreviewStartSeconds(
+          correctTrack.id,
+          difficulty,
+          playedTrackSegments,
+        ),
         previewDurationSeconds: this.getPreviewDurationSeconds(difficulty),
         preview: correctTrack.preview,
         cover: correctTrack.cover,
@@ -125,5 +166,37 @@ export class QuizService {
     }
 
     return 30;
+  }
+
+  private getPossiblePreviewStartSeconds(difficulty: Difficulty): number[] {
+    if (difficulty === 'hard') {
+      return [0, 10, 20];
+    }
+
+    if (difficulty === 'medium') {
+      return [0, 10];
+    }
+
+    return [0];
+  }
+
+  private getPreviewStartSeconds(
+    trackId: number,
+    difficulty: Difficulty,
+    playedTrackSegments: PlayedTrackSegments,
+  ): number {
+    const possibleStartSeconds =
+      this.getPossiblePreviewStartSeconds(difficulty);
+
+    const usedStartSeconds = playedTrackSegments[String(trackId)] ?? [];
+
+    const unusedStartSeconds = possibleStartSeconds.filter(
+      (startSecond) => !usedStartSeconds.includes(startSecond),
+    );
+
+    const startOptions =
+      unusedStartSeconds.length > 0 ? unusedStartSeconds : possibleStartSeconds;
+
+    return this.shuffleArray(startOptions)[0] ?? 0;
   }
 }
