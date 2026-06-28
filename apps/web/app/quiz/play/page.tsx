@@ -26,11 +26,76 @@ type QuizQuestion = {
   options: QuizOption[];
 };
 
+function getResultRank(accuracy: number) {
+  if (accuracy === 100) {
+    return {
+      title: 'BeatGuess Legend',
+      description: 'Perfect score. You really know your music.',
+      emoji: '👑',
+    };
+  }
+
+  if (accuracy >= 91) {
+    return {
+      title: 'Music Genius',
+      description: 'Almost perfect. Your music knowledge is elite.',
+      emoji: '🧠',
+    };
+  }
+
+  if (accuracy >= 76) {
+    return {
+      title: 'Hit Master',
+      description: 'Very strong performance. You know the hits.',
+      emoji: '🔥',
+    };
+  }
+
+  if (accuracy >= 61) {
+    return {
+      title: 'Solid Ear',
+      description: 'Good ear. You recognized most of the tracks.',
+      emoji: '🎧',
+    };
+  }
+
+  if (accuracy >= 41) {
+    return {
+      title: 'Beat Hunter',
+      description: 'Not bad. You caught a good part of the quiz.',
+      emoji: '🎯',
+    };
+  }
+
+  if (accuracy >= 21) {
+    return {
+      title: 'Warm-up Listener',
+      description: 'You are warming up. A few more rounds will help.',
+      emoji: '🔊',
+    };
+  }
+
+  if (accuracy >= 1) {
+    return {
+      title: 'Rookie Ear',
+      description: 'You got at least one. Time to sharpen the ear.',
+      emoji: '🌱',
+    };
+  }
+
+  return {
+    title: 'Silent Mode',
+    description: 'No correct answer this time. Run it back.',
+    emoji: '😅',
+  };
+}
+
 function QuizPlayContent() {
   const searchParams = useSearchParams();
   const artistIdsParam = searchParams.get('artists');
   const difficultyParam = searchParams.get('difficulty');
   const amountParam = searchParams.get('amount');
+
   const questionAmount = amountParam ? Number(amountParam) : 10;
 
   const difficulty: Difficulty =
@@ -44,6 +109,7 @@ function QuizPlayContent() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
   const [score, setScore] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
@@ -68,6 +134,13 @@ function QuizPlayContent() {
 
   const isFinished =
     questions.length > 0 && currentQuestionIndex >= questions.length;
+
+  const accuracy =
+    questions.length > 0
+      ? Math.round((correctAnswers / questions.length) * 100)
+      : 0;
+
+  const resultRank = getResultRank(accuracy);
 
   const progressText = useMemo(() => {
     if (questions.length === 0) {
@@ -113,7 +186,15 @@ function QuizPlayContent() {
         }
 
         const generatedQuestions: QuizQuestion[] = await response.json();
+
         setQuestions(generatedQuestions);
+        setCurrentQuestionIndex(0);
+        setSelectedTrackId(null);
+        setScore(0);
+        setCorrectAnswers(0);
+        setAudioCurrentTime(0);
+        setAudioDuration(0);
+        setIsAudioPlaying(false);
       } catch {
         setError('Could not load quiz. Check if the backend is running.');
       } finally {
@@ -162,6 +243,7 @@ function QuizPlayContent() {
 
     if (trackId === currentQuestion.correctTrackId) {
       setScore((currentScore) => currentScore + 100);
+      setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
     }
   }
 
@@ -208,14 +290,50 @@ function QuizPlayContent() {
   if (isFinished) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-black px-6 text-white">
-        <div className="max-w-xl rounded-3xl border border-lime-400/30 bg-zinc-950 p-8 text-center">
+        <div className="max-w-2xl rounded-3xl border border-lime-400/30 bg-zinc-950 p-8 text-center">
           <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
             Quiz finished
           </p>
-          <h1 className="mt-4 text-5xl font-bold">Score: {score}</h1>
-          <p className="mt-4 text-zinc-400">
-            You played {questions.length} questions.
-          </p>
+
+          <div className="mt-6 text-7xl">{resultRank.emoji}</div>
+
+          <h1 className="mt-4 text-4xl font-bold md:text-5xl">
+            {resultRank.title}
+          </h1>
+
+          <p className="mt-3 text-zinc-400">{resultRank.description}</p>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-zinc-800 bg-black p-5">
+              <p className="text-sm text-zinc-500">Score</p>
+              <p className="mt-2 text-3xl font-bold text-lime-300">{score}</p>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-800 bg-black p-5">
+              <p className="text-sm text-zinc-500">Correct answers</p>
+              <p className="mt-2 text-3xl font-bold text-lime-300">
+                {correctAnswers} / {questions.length}
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-zinc-800 bg-black p-5">
+              <p className="text-sm text-zinc-500">Accuracy</p>
+              <p className="mt-2 text-3xl font-bold text-lime-300">
+                {accuracy}%
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-5 text-left">
+            <p className="text-sm font-semibold text-zinc-300">
+              Rank system
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              0% Silent Mode · 1–20% Rookie Ear · 21–40% Warm-up Listener ·
+              41–60% Beat Hunter · 61–75% Solid Ear · 76–90% Hit Master ·
+              91–99% Music Genius · 100% BeatGuess Legend
+            </p>
+          </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <a
@@ -386,7 +504,9 @@ function QuizPlayContent() {
         </div>
 
         <div className="mt-8 flex items-center justify-between">
-          <p className="text-xl font-semibold">Score: {score}</p>
+          <p className="text-xl font-semibold">
+            Score: {score} · Correct: {correctAnswers}
+          </p>
 
           {selectedTrackId !== null && (
             <button
