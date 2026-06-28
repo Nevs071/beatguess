@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { LanguageProvider } from '@/lib/language-provider';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import { PlayerProvider } from '@/lib/player-provider';
+import { PlayerWidget } from '@/components/player-widget';
 
 export const metadata: Metadata = {
   title: 'BeatGuess',
@@ -17,8 +19,11 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <LanguageProvider>
-          <LanguageSwitcher />
-          {children}
+          <PlayerProvider>
+            <LanguageSwitcher />
+            <PlayerWidget />
+            {children}
+          </PlayerProvider>
         </LanguageProvider>
       </body>
     </html>
