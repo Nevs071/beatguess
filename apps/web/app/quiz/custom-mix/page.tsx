@@ -25,6 +25,7 @@ export default function CustomMixPage() {
   const [questionAmount, setQuestionAmount] = useState(10);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [historyResetMessage, setHistoryResetMessage] = useState('');
 
   async function searchArtists() {
     if (query.trim().length < 2) {
@@ -71,6 +72,15 @@ export default function CustomMixPage() {
     setSelectedArtists(
       selectedArtists.filter((artist) => artist.id !== artistId),
     );
+  }
+
+  function resetPlayedHistory() {
+    localStorage.removeItem('beatguess-played-track-segments');
+    setHistoryResetMessage('Played song history reset. Fresh quiz pool restored.');
+
+    setTimeout(() => {
+      setHistoryResetMessage('');
+    }, 3000);
   }
 
   function startQuiz() {
@@ -148,6 +158,32 @@ export default function CustomMixPage() {
             </span>
           </p>
         </div>
+
+        <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+      <h2 className="text-xl font-semibold">Smart replay history</h2>
+      <p className="mt-2 text-sm text-zinc-400">
+        BeatGuess remembers played songs and segments to avoid repeating the
+        same parts too often.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      onClick={resetPlayedHistory}
+      className="rounded-full border border-zinc-700 px-5 py-3 text-sm font-semibold text-white transition hover:border-lime-400 hover:text-lime-300"
+    >
+      Reset played history
+    </button>
+  </div>
+
+  {historyResetMessage && (
+    <p className="mt-4 rounded-xl border border-lime-400/30 bg-lime-400/10 px-4 py-3 text-sm text-lime-200">
+      {historyResetMessage}
+    </p>
+  )}
+</div>
 
         <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
           <h2 className="text-xl font-semibold">Choose quiz length</h2>
