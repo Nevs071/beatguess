@@ -19,6 +19,7 @@ type Difficulty = 'easy' | 'medium' | 'hard';
 type AnswerMode = 'mcq' | 'typed';
 type TypedAnswerKind = 'song' | 'artist' | 'album' | 'mixed';
 
+const RECENT_ARTISTS_STORAGE_KEY = 'beatguess-recent-artists';
 export default function CustomMixPage() {
   const router = useRouter();
   const { language } = useLanguage();
@@ -91,13 +92,29 @@ export default function CustomMixPage() {
       setHistoryResetMessage('');
     }, 3000);
   }
+function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
+  try {
+    const recentArtists = artistsToSave.slice(-3).reverse().map((artist) => ({
+      id: artist.id,
+      name: artist.name,
+      image: artist.image,
+    }));
 
+    localStorage.setItem(
+      RECENT_ARTISTS_STORAGE_KEY,
+      JSON.stringify(recentArtists),
+    );
+  } catch {
+    // If browser storage fails, the quiz should still work.
+  }
+}
   function startQuiz() {
     if (selectedArtists.length === 0) {
       return;
     }
 
     const artistIds = selectedArtists.map((artist) => artist.id).join(',');
+    saveRecentArtistsForHomePage(selectedArtists);
 
     router.push(
   `/quiz/play?artists=${artistIds}&difficulty=${difficulty}&amount=${questionAmount}&answerMode=${answerMode}&typedAnswerKind=${typedAnswerKind}`,
