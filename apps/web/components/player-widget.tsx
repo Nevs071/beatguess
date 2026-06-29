@@ -60,19 +60,19 @@ export function PlayerWidget() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className="fixed left-3 right-3 top-16 z-50 md:bottom-4 md:left-auto md:right-4 md:top-auto">
       {!isOpen && (
         <button
           type="button"
           onClick={() => setIsOpen(true)}
-          className="rounded-full border border-zinc-800 bg-black/90 px-4 py-3 text-sm font-bold text-white shadow-2xl backdrop-blur transition hover:border-lime-400 hover:text-lime-300"
+          className="max-w-full rounded-full border border-zinc-800 bg-black/85 px-4 py-3 text-sm font-black text-white shadow-2xl backdrop-blur transition hover:border-lime-400 hover:text-lime-300 md:max-w-none"
         >
           {player ? `👤 ${player.name}` : `👤 ${text.playAsGuest}`}
         </button>
       )}
 
       {isOpen && (
-        <div className="w-[320px] rounded-3xl border border-zinc-800 bg-zinc-950 p-5 text-white shadow-2xl">
+        <div className="w-full rounded-3xl border border-zinc-800 bg-zinc-950 p-5 text-white shadow-2xl md:w-[320px]">
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-lg font-bold">{text.playerProfile}</h2>
@@ -84,7 +84,7 @@ export function PlayerWidget() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="text-zinc-500 hover:text-white"
+              className="text-2xl leading-none text-zinc-500 hover:text-white"
             >
               ×
             </button>
@@ -93,9 +93,11 @@ export function PlayerWidget() {
           {player ? (
             <div className="mt-5 rounded-2xl border border-lime-400/30 bg-lime-400/10 p-4">
               <p className="text-sm text-zinc-400">{text.currentPlayer}</p>
+
               <p className="mt-1 text-xl font-black text-lime-300">
                 {player.name}
               </p>
+
               <p className="mt-1 text-sm text-zinc-500">{text.guestMode}</p>
 
               <div className="mt-4 flex flex-col gap-3">
