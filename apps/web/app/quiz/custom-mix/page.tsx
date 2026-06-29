@@ -538,12 +538,23 @@ export default function CustomMixPage() {
                 : "border-white/10 bg-[#0b1026]/80"
             }`}
           >
-            <p className="text-4xl font-black text-lime-300">
-              {String(option.value).toUpperCase()}
-            </p>
+            <div className="flex items-start justify-between gap-4">
+  <div>
+    <h3 className="text-3xl font-black text-white md:text-4xl">
+      {option.label}
+    </h3>
 
-            <h2 className="mt-5 text-2xl font-black">{option.label}</h2>
-            <p className="mt-2 leading-7 text-zinc-400">{option.description}</p>
+    <p className="mt-4 text-base leading-7 text-zinc-400">
+      {option.description}
+    </p>
+  </div>
+
+  {selectedValue === option.value && (
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-lime-400 text-lg font-black text-black">
+      ✓
+    </span>
+  )}
+</div>
           </button>
         ))}
       </div>
