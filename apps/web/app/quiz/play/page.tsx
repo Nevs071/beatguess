@@ -814,145 +814,186 @@ timeoutQuestionIdRef.current = null;
   }
 
   if (isFinished) {
-    return (
-  <main className="relative min-h-screen overflow-hidden bg-[#020617] px-4 pb-32 pt-24 text-white md:px-6 md:py-10">
-    <QuizMusicBackground />
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-[#020617] px-4 pb-32 pt-24 text-white md:px-6 md:py-10">
+      <QuizMusicBackground />
 
-    <section className="relative mx-auto max-w-4xl">
-          <div className="rounded-3xl border border-lime-400/30 bg-zinc-950 p-8 text-center">
-            <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
-              {t.quizFinished}
-            </p>
+      <section className="relative mx-auto max-w-5xl">
+        <div className="rounded-[2.5rem] border border-white/10 bg-black/40 p-5 text-center shadow-[0_0_100px_rgba(236,72,153,0.12)] backdrop-blur-xl md:p-8">
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-lime-400/40 bg-lime-400/10 px-4 py-2 text-sm font-black uppercase tracking-[0.25em] text-lime-300">
+            <span className="h-2 w-2 rounded-full bg-lime-400" />
+            {t.quizFinished}
+          </div>
 
-            <div className="mt-6 text-7xl">{resultRank.emoji}</div>
+          <div className="relative mx-auto mt-8 flex h-36 w-36 items-center justify-center rounded-full border border-white/10 bg-gradient-to-br from-lime-400/20 via-cyan-400/15 to-pink-500/20 shadow-[0_0_80px_rgba(163,230,53,0.18)]">
+            <div className="absolute inset-0 rounded-full bg-lime-400/10 blur-2xl" />
+            <span className="relative text-7xl">{resultRank.emoji}</span>
+          </div>
 
-            <h1 className="mt-4 text-4xl font-bold md:text-5xl">
-              {resultRank.title}
-            </h1>
+          <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-black leading-tight md:text-6xl">
+            {resultRank.title}
+          </h1>
 
-            <p className="mt-3 text-zinc-400">{resultRank.description}</p>
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-zinc-300 md:text-lg">
+            {resultRank.description}
+          </p>
 
-            <p className="mt-3 text-sm text-lime-300">
-              {getSavedForText(
-                player?.name ?? getGuestName(language),
-                language,
-              )}
-            </p>
+          <p className="mt-4 text-sm font-bold text-lime-300">
+            {getSavedForText(player?.name ?? getGuestName(language), language)}
+          </p>
 
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-                <p className="text-sm text-zinc-500">{t.score}</p>
-                <p className="mt-2 text-3xl font-bold text-lime-300">{score}</p>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-                <p className="text-sm text-zinc-500">{t.correctAnswers}</p>
-                <p className="mt-2 text-3xl font-bold text-lime-300">
-                  {correctAnswers} / {questions.length}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-800 bg-black p-5">
-                <p className="text-sm text-zinc-500">{t.accuracy}</p>
-                <p className="mt-2 text-3xl font-bold text-lime-300">
-                  {accuracy}%
-                </p>
-              </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/45 p-5 shadow-[0_0_50px_rgba(163,230,53,0.08)] backdrop-blur-xl">
+              <p className="text-sm font-bold text-zinc-400">{t.score}</p>
+              <p className="mt-2 text-4xl font-black text-lime-300">{score}</p>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-5 text-left">
-              <p className="text-sm font-semibold text-zinc-300">
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/45 p-5 shadow-[0_0_50px_rgba(34,211,238,0.08)] backdrop-blur-xl">
+              <p className="text-sm font-bold text-zinc-400">
+                {t.correctAnswers}
+              </p>
+              <p className="mt-2 text-4xl font-black text-cyan-300">
+                {correctAnswers} / {questions.length}
+              </p>
+            </div>
+
+            <div className="rounded-[1.5rem] border border-white/10 bg-black/45 p-5 shadow-[0_0_50px_rgba(236,72,153,0.08)] backdrop-blur-xl">
+              <p className="text-sm font-bold text-zinc-400">{t.accuracy}</p>
+              <p className="mt-2 text-4xl font-black text-pink-300">
+                {accuracy}%
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/40 p-5 text-left shadow-[0_0_70px_rgba(34,211,238,0.08)] backdrop-blur-xl">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm font-black uppercase tracking-[0.25em] text-zinc-300">
                 {t.answerReview}
               </p>
 
-              <div className="mt-4 space-y-3">
-                {answerResults.map((answer, index) => (
-                  <div
-                    key={answer.questionId}
-                    className={`rounded-2xl border p-4 ${
-                      answer.isCorrect
-                        ? "border-lime-400/40 bg-lime-400/10"
-                        : "border-red-400/40 bg-red-500/10"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="font-semibold">
-                        {t.question} {index + 1}{" "}
-                        {answer.isCorrect ? "✅" : "❌"}
-                      </p>
+              <p className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-zinc-400">
+                {correctAnswers} / {questions.length}
+              </p>
+            </div>
 
-                      <p
-                        className={`text-sm font-semibold ${
-                          answer.isCorrect ? "text-lime-300" : "text-red-300"
-                        }`}
-                      >
-                        {answer.isCorrect ? t.correct : t.wrong}
-                      </p>
-                    </div>
-
-                    <p className="mt-3 text-sm text-zinc-400">
-                      {t.correctAnswer}
-                    </p>
-                    <p className="font-semibold text-white">
-                      {answer.correctTitle}
-                      {answer.correctArtistName && (
-                        <span className="text-zinc-500">
-                          {" "}
-                          — {answer.correctArtistName}
-                        </span>
-                      )}
+            <div className="mt-5 grid gap-3">
+              {answerResults.map((answer, index) => (
+                <div
+                  key={answer.questionId}
+                  className={`rounded-[1.25rem] border p-4 backdrop-blur-xl ${
+                    answer.isCorrect
+                      ? "border-lime-400/40 bg-lime-400/10"
+                      : "border-red-400/40 bg-red-500/10"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="font-black">
+                      {t.question} {index + 1}{" "}
+                      {answer.isCorrect ? "✅" : "❌"}
                     </p>
 
-                    <p className="mt-3 text-sm text-zinc-400">{t.yourAnswer}</p>
-                    <p className="font-semibold text-white">
-                      {answer.selectedTitle}
-                      {answer.selectedArtistName && (
-                        <span className="text-zinc-500">
-                          {" "}
-                          — {answer.selectedArtistName}
-                        </span>
-                      )}
+                    <p
+                      className={`text-sm font-black ${
+                        answer.isCorrect ? "text-lime-300" : "text-red-300"
+                      }`}
+                    >
+                      {answer.isCorrect ? t.correct : t.wrong}
                     </p>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            <div className="mt-6 rounded-2xl border border-zinc-800 bg-black p-5 text-left">
-              <p className="text-sm font-semibold text-zinc-300">
-                {t.rankSystem}
-              </p>
+                  {answer.isCorrect ? (
+  <div className="mt-4 rounded-2xl border border-lime-400/20 bg-lime-400/5 p-4">
+    <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+      {t.yourAnswer}
+    </p>
 
-              <p className="mt-2 text-sm text-zinc-500">{t.rankSystemText}</p>
-            </div>
+    <p className="mt-1 font-bold text-white">
+      {answer.selectedTitle}
+      {answer.selectedArtistName && (
+        <span className="text-zinc-500">
+          {" "}
+          — {answer.selectedArtistName}
+        </span>
+      )}
+    </p>
+  </div>
+) : (
+  <div className="mt-4 grid gap-4 md:grid-cols-2">
+    <div>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+        {t.yourAnswer}
+      </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <a
-                href="/quiz/custom-mix"
-                className="rounded-full bg-lime-400 px-6 py-3 font-semibold text-black"
-              >
-                {t.playAnother}
-              </a>
+      <p className="mt-1 font-bold text-white">
+        {answer.selectedTitle}
+        {answer.selectedArtistName && (
+          <span className="text-zinc-500">
+            {" "}
+            — {answer.selectedArtistName}
+          </span>
+        )}
+      </p>
+    </div>
 
-              <a
-                href="/scores"
-                className="rounded-full border border-lime-400 px-6 py-3 font-semibold text-lime-300"
-              >
-                {getScoresText(language)}
-              </a>
+    <div>
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500">
+        {t.correctAnswer}
+      </p>
 
-              <a
-                href="/"
-                className="rounded-full border border-zinc-700 px-6 py-3 font-semibold text-white"
-              >
-                {t.backHome}
-              </a>
+      <p className="mt-1 font-bold text-lime-200">
+        {answer.correctTitle}
+        {answer.correctArtistName && (
+          <span className="text-zinc-500">
+            {" "}
+            — {answer.correctArtistName}
+          </span>
+        )}
+      </p>
+    </div>
+  </div>
+)}
+                </div>
+              ))}
             </div>
           </div>
-        </section>
-      </main>
-    );
-  }
+
+          <div className="mt-6 rounded-[2rem] border border-white/10 bg-black/35 p-5 text-left backdrop-blur-xl">
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-zinc-300">
+              {t.rankSystem}
+            </p>
+
+            <p className="mt-2 text-sm leading-6 text-zinc-400">
+              {t.rankSystemText}
+            </p>
+          </div>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <a
+              href="/quiz/custom-mix"
+              className="rounded-full bg-lime-400 px-7 py-4 text-center font-black text-black shadow-[0_0_40px_rgba(163,230,53,0.25)] transition hover:scale-[1.02] hover:bg-lime-300"
+            >
+              {t.playAnother}
+            </a>
+
+            <a
+              href="/scores"
+              className="rounded-full border border-cyan-400/50 bg-cyan-400/10 px-7 py-4 text-center font-black text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/20"
+            >
+              {getScoresText(language)}
+            </a>
+
+            <a
+              href="/"
+              className="rounded-full border border-white/10 bg-white/5 px-7 py-4 text-center font-black text-white transition hover:border-lime-400 hover:text-lime-300"
+            >
+              {t.backHome}
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+}
 
   if (!currentQuestion) {
     return (
