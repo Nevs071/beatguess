@@ -20,10 +20,25 @@ type AnswerMode = 'mcq' | 'typed';
 type TypedAnswerKind = 'song' | 'artist' | 'album' | 'mixed';
 
 const RECENT_ARTISTS_STORAGE_KEY = 'beatguess-recent-artists';
+const CUSTOM_MIX_BACKGROUND_IMAGES = [
+  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=2200&q=90',
+];
+
+function getRandomCustomMixBackground() {
+  return CUSTOM_MIX_BACKGROUND_IMAGES[
+    Math.floor(Math.random() * CUSTOM_MIX_BACKGROUND_IMAGES.length)
+  ];
+}
 export default function CustomMixPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const t = translations[language].customMix;
+  const [backgroundImage] = useState(() => getRandomCustomMixBackground());
 
   const [query, setQuery] = useState('');
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -149,10 +164,49 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
 
   const selectedArtistLabel =
     selectedArtists.length === 1 ? t.selectedArtist : t.selectedArtists;
+    const customMixBackgroundImage =
+  selectedArtists[0]?.imageLarge ?? selectedArtists[0]?.image ?? backgroundImage;
+
+const answerModeLabel =
+  answerMode === 'typed' ? 'Typing challenge' : 'Multiple choice';
+
+const questionTypeLabel =
+  typedAnswerKind === 'artist'
+    ? 'Artist name'
+    : typedAnswerKind === 'album'
+      ? 'Album name'
+      : typedAnswerKind === 'mixed'
+        ? 'Mixed'
+        : 'Song title';
 
   return (
-  <main className="min-h-screen bg-black px-4 py-6 text-white md:px-8">
-    <section className="mx-auto max-w-7xl">
+  <main className="relative min-h-screen overflow-x-hidden bg-black px-4 pb-28 pt-6 text-white md:px-8 md:pb-10">
+    <div className="pointer-events-none absolute inset-0">
+      {customMixBackgroundImage && (
+        <>
+          <div
+            className="absolute inset-0 scale-105 bg-cover bg-center opacity-70"
+            style={{
+              backgroundImage: `url(${customMixBackgroundImage})`,
+            }}
+          />
+
+          <div
+            className="absolute inset-0 scale-110 bg-cover bg-center opacity-35 blur-2xl"
+            style={{
+              backgroundImage: `url(${customMixBackgroundImage})`,
+            }}
+          />
+        </>
+      )}
+
+      <div className="absolute inset-0 bg-black/65" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/80" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(163,230,53,0.18),transparent_35%)]" />
+    </div>
+
+    <section className="relative mx-auto max-w-7xl">
       <a
         href="/"
         className="inline-flex items-center text-sm font-medium text-lime-300 transition hover:text-lime-200"
@@ -164,7 +218,7 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
         {/* LEFT COLUMN */}
         <div className="space-y-6">
           {/* HERO */}
-          <div className="overflow-hidden rounded-[2rem] border border-zinc-800 bg-gradient-to-br from-zinc-950 via-black to-zinc-950 p-6 shadow-[0_0_40px_rgba(132,204,22,0.08)] md:p-8">
+          <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-black/60 p-6 shadow-[0_0_60px_rgba(132,204,22,0.12)] backdrop-blur-xl md:p-8">
             <div className="grid gap-8 lg:grid-cols-[1.3fr_0.9fr] lg:items-center">
               <div>
                 <p className="text-xs uppercase tracking-[0.45em] text-lime-300">
@@ -194,10 +248,17 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
                     ⚡ {questionAmount} questions
                   </div>
 
-                  <div className="rounded-full border border-zinc-800 bg-zinc-950 px-4 py-2 text-sm text-zinc-200">
-                    👥 {selectedArtists.length} selected artist
-                    {selectedArtists.length > 1 ? 's' : ''}
-                  </div>
+                  <div className="rounded-full border border-zinc-800 bg-black/70 px-4 py-2 text-sm text-zinc-200">
+  👥 {selectedArtists.length} {selectedArtistLabel}
+</div>
+
+<div className="rounded-full border border-zinc-800 bg-black/70 px-4 py-2 text-sm text-zinc-200">
+  🧠 {answerModeLabel}
+</div>
+
+<div className="rounded-full border border-zinc-800 bg-black/70 px-4 py-2 text-sm text-zinc-200">
+  🎯 {questionTypeLabel}
+</div>
                 </div>
               </div>
 
@@ -252,7 +313,7 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
           </div>
 
           {/* SEARCH CARD */}
-          <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-6">
+          <div className="rounded-[2rem] border border-white/10 bg-black/65 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-black">1. Search artists</h2>
@@ -292,7 +353,7 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
           </div>
 
           {/* SEARCH RESULTS */}
-          <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-6">
+          <div className="rounded-[2rem] border border-white/10 bg-black/65 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-black">Search results</h2>
               <span className="rounded-full border border-zinc-800 bg-black px-4 py-2 text-sm text-zinc-400">
@@ -348,7 +409,7 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
           </div>
 
           {/* SELECTED ARTISTS */}
-          <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-6">
+          <div className="rounded-[2rem] border border-white/10 bg-black/65 p-6 backdrop-blur-xl">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-2xl font-black">2. Selected artists</h2>
@@ -397,7 +458,7 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
         {/* RIGHT COLUMN */}
         <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
           {/* GAME SETUP */}
-          <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-6">
+          <div className="rounded-[2rem] border border-white/10 bg-black/65 p-6 backdrop-blur-xl">
             <h2 className="text-2xl font-black">3. Game setup</h2>
 
             {/* QUIZ LENGTH */}
@@ -575,7 +636,7 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
           </div>
 
           {/* SMART REPLAY */}
-          <div className="rounded-[2rem] border border-zinc-800 bg-zinc-950 p-6">
+          <div className="rounded-[2rem] border border-white/10 bg-black/65 p-6 backdrop-blur-xl">
             <h2 className="text-xl font-black">Smart replay history</h2>
             <p className="mt-3 text-sm leading-6 text-zinc-400">
               BeatGuess remembers played songs and segments to avoid repeating
