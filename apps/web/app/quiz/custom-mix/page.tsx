@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
 import { translations } from '@/lib/i18n';
@@ -38,7 +38,10 @@ export default function CustomMixPage() {
   const router = useRouter();
   const { language } = useLanguage();
   const t = translations[language].customMix;
-  const [backgroundImage] = useState(() => getRandomCustomMixBackground());
+  const [backgroundImage, setBackgroundImage] = useState('');
+  useEffect(() => {
+  setBackgroundImage(getRandomCustomMixBackground());
+}, []);
 
   const [query, setQuery] = useState('');
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -166,6 +169,11 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
     selectedArtists.length === 1 ? t.selectedArtist : t.selectedArtists;
     const customMixBackgroundImage =
   selectedArtists[0]?.imageLarge ?? selectedArtists[0]?.image ?? backgroundImage;
+  const selectedArtistIds = new Set(
+  selectedArtists.map((artist) => artist.id),
+);
+
+const isQuizReady = selectedArtists.length > 0;
 
 const answerModeLabel =
   answerMode === 'typed' ? 'Typing challenge' : 'Multiple choice';
@@ -373,37 +381,77 @@ const questionTypeLabel =
               </div>
             ) : (
               <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {artists.map((artist) => (
-                  <button
-                    key={artist.id}
-                    onClick={() => selectArtist(artist)}
-                    className="group rounded-3xl border border-zinc-800 bg-black p-4 text-left transition hover:border-lime-400 hover:bg-zinc-950"
-                  >
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={artist.image}
-                        alt={artist.name}
-                        className="h-20 w-20 rounded-2xl object-cover"
-                      />
+                {artists.map((artist) => {
+  const isArtistSelected = selectedArtistIds.has(artist.id);
 
-                      <div className="min-w-0">
-                        <h3 className="truncate text-lg font-bold text-white">
-                          {artist.name}
-                        </h3>
-                        <p className="mt-1 text-sm text-zinc-400">
-                          {artist.fans.toLocaleString()} fans
-                        </p>
-                        <p className="text-sm text-zinc-500">
-                          {artist.albums} albums
-                        </p>
-                      </div>
-                    </div>
+  return (
+    <button
+      key={artist.id}
+      type="button"
+      onClick={() =>
+        isArtistSelected ? removeArtist(artist.id) : selectArtist(artist)
+      }
+      className={`group overflow-hidden rounded-3xl border text-left transition ${
+        isArtistSelected
+          ? 'border-lime-400 bg-lime-400/15 shadow-[0_0_35px_rgba(132,204,22,0.18)]'
+          : 'border-white/10 bg-black/70 hover:border-lime-400 hover:bg-black/85'
+      }`}
+    >
+      <div className="relative h-36 overflow-hidden">
+        <img
+          src={artist.imageLarge ?? artist.image}
+          alt={artist.name}
+          className="h-full w-full object-cover opacity-85 transition group-hover:scale-105"
+        />
 
-                    <div className="mt-4 inline-flex rounded-full border border-lime-400/30 bg-lime-400/10 px-3 py-1 text-xs font-semibold text-lime-300">
-                      Add to mix
-                    </div>
-                  </button>
-                ))}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
+
+        {isArtistSelected && (
+          <div className="absolute inset-0 bg-lime-400/20" />
+        )}
+
+        <div className="absolute left-4 top-4">
+          <span
+            className={`rounded-full px-3 py-2 text-xs font-black ${
+              isArtistSelected
+                ? 'bg-lime-400 text-black'
+                : 'bg-black/70 text-white'
+            }`}
+          >
+            {isArtistSelected ? `✓ ${t.added}` : `+ ${t.add}`}
+          </span>
+        </div>
+
+        <div className="absolute bottom-4 left-4 right-4">
+          <h3 className="truncate text-2xl font-black text-white">
+            {artist.name}
+          </h3>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 p-4">
+        <div>
+          <p className="text-sm text-zinc-300">
+            {artist.fans.toLocaleString()} {t.fans}
+          </p>
+          <p className="text-sm text-zinc-500">
+            {artist.albums} {t.albums}
+          </p>
+        </div>
+
+        <div
+          className={`flex h-11 w-11 items-center justify-center rounded-full text-lg font-black ${
+            isArtistSelected
+              ? 'bg-lime-400 text-black'
+              : 'bg-zinc-900 text-lime-300'
+          }`}
+        >
+          {isArtistSelected ? '✓' : '+'}
+        </div>
+      </div>
+    </button>
+  );
+})}
               </div>
             )}
           </div>
@@ -659,7 +707,43 @@ const questionTypeLabel =
           </div>
         </aside>
       </div>
-    </section>
+       </section>
+
+    {isQuizReady && (
+      <div className="fixed bottom-4 left-4 right-4 z-50 rounded-[1.5rem] border border-lime-400/30 bg-black/85 p-3 shadow-[0_0_45px_rgba(132,204,22,0.25)] backdrop-blur-xl md:left-1/2 md:right-auto md:w-[560px] md:-translate-x-1/2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-3">
+              {selectedArtists.slice(0, 3).map((artist) => (
+                <img
+                  key={artist.id}
+                  src={artist.image}
+                  alt={artist.name}
+                  className="h-10 w-10 rounded-full border-2 border-black object-cover"
+                />
+              ))}
+            </div>
+
+            <div>
+              <p className="text-sm font-black text-white">
+                {selectedArtists.length} {selectedArtistLabel} ready
+              </p>
+              <p className="text-xs text-zinc-400">
+                {questionAmount} questions · {answerModeLabel} · {questionTypeLabel}
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={startQuiz}
+            className="rounded-2xl bg-lime-400 px-5 py-3 text-sm font-black text-black transition hover:scale-[1.02] hover:bg-lime-300"
+          >
+            ▶ {t.startQuiz}
+          </button>
+        </div>
+      </div>
+    )}
   </main>
 );
 }
