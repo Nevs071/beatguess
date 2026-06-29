@@ -673,7 +673,7 @@ function failCurrentQuestionByTimeout() {
     },
   ]);
 
-  scheduleNextQuestion(700);
+  scheduleNextQuestion(1200);
 }
 
   function toggleAudio() {
@@ -1093,9 +1093,13 @@ timeoutQuestionIdRef.current = null;
                     setAudioCurrentTime(audio.currentTime);
                   }}
                   onEnded={() => {
-                    setAudioCurrentTime(previewEndSeconds);
-                    setIsAudioPlaying(false);
-                  }}
+  setAudioCurrentTime(previewEndSeconds);
+  setIsAudioPlaying(false);
+
+  if (selectedTrackId === null) {
+    failCurrentQuestionByTimeout();
+  }
+}}
                 />
 
                 <div className="rounded-full border border-white/10 bg-black/50 p-4 backdrop-blur-xl">
@@ -1145,20 +1149,23 @@ timeoutQuestionIdRef.current = null;
         {answerMode === "mcq" ? (
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {currentMcqAnswerOptions.map((option) => {
-              const isSelected = selectedTrackId === option.trackId;
-              const isCorrect = option.isCorrect;
-              const showResult = selectedTrackId !== null;
+            const isSelected = selectedTrackId === option.trackId;
+const isCorrect = option.isCorrect;
+const showResult = selectedTrackId !== null;
+const isTimeoutLoss = selectedTrackId === -1;
 
-            let resultClass =
+let resultClass =
   "border-white/10 bg-black/35 backdrop-blur-xl hover:border-lime-400 hover:bg-white/10";
 
-              if (showResult && isCorrect) {
-                resultClass = "border-lime-400 bg-lime-400/20";
-              }
-
-              if (showResult && isSelected && !isCorrect) {
-                resultClass = "border-red-400 bg-red-500/20";
-              }
+if (showResult && isTimeoutLoss && isCorrect) {
+  resultClass = "border-lime-400 bg-lime-400/20";
+} else if (showResult && isTimeoutLoss && !isCorrect) {
+  resultClass = "border-red-400/40 bg-red-500/10";
+} else if (showResult && isCorrect) {
+  resultClass = "border-lime-400 bg-lime-400/20";
+} else if (showResult && isSelected && !isCorrect) {
+  resultClass = "border-red-400 bg-red-500/20";
+}
 
               return (
                 <button
