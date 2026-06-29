@@ -97,7 +97,7 @@ function saveRecentArtistsForHomePage(artistsToSave: Artist[]) {
     const recentArtists = artistsToSave.slice(-3).reverse().map((artist) => ({
       id: artist.id,
       name: artist.name,
-      image: artist.image,
+     image: artist.imageLarge ?? artist.image,
     }));
 
     localStorage.setItem(

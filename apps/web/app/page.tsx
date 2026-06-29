@@ -41,6 +41,51 @@ const FALLBACK_PREVIEW_ARTISTS: PreviewArtist[] = [
   { id: 19, name: 'Lil Baby' },
   { id: 20, name: 'Pop Smoke' },
 ];
+const FALLBACK_BACKGROUND_IMAGES = [
+  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1501612780327-45045538702b?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1499364615650-ec38552f4f34?auto=format&fit=crop&w=2200&q=90',
+
+  'https://images.unsplash.com/photo-1487180144351-b8472da7d491?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1464375117522-1311d8a5b81f?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1505236858219-8359eb29e329?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1508973379184-7517410fb0bc?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=2200&q=90',
+
+  'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1485579149621-3123dd979885?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1521337581100-8ca9a73a5f79?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1514533450685-4493e01d1fdc?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1549213783-8284d0336c4f?auto=format&fit=crop&w=2200&q=90',
+  'https://images.unsplash.com/photo-1519671482749-fd09be7ccebf?auto=format&fit=crop&w=2200&q=90',
+
+  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=1800&q=80',
+  'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=1800&q=80',
+  'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=1800&q=80',
+  'https://images.unsplash.com/photo-1506157786151-b8491531f063?auto=format&fit=crop&w=1800&q=80',
+];
+
+function getRandomBackgroundImage() {
+  return FALLBACK_BACKGROUND_IMAGES[
+    Math.floor(Math.random() * FALLBACK_BACKGROUND_IMAGES.length)
+  ];
+}
 
 function getRandomPreviewArtists() {
   return [...FALLBACK_PREVIEW_ARTISTS]
@@ -152,6 +197,7 @@ export default function HomePage() {
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [isCheckingBackend, setIsCheckingBackend] = useState(true);
   const [previewArtists, setPreviewArtists] = useState<PreviewArtist[]>([]);
+  const [backgroundImage, setBackgroundImage] = useState('');
 
  useEffect(() => {
   async function checkBackend() {
@@ -182,26 +228,56 @@ useEffect(() => {
       const parsedArtists = JSON.parse(savedArtists) as PreviewArtist[];
 
       if (Array.isArray(parsedArtists) && parsedArtists.length > 0) {
-        setPreviewArtists(parsedArtists.slice(0, 3));
+        const recentArtists = parsedArtists.slice(0, 3);
+        const firstArtistWithImage = recentArtists.find(
+          (artist) => artist.image,
+        );
+
+        setPreviewArtists(recentArtists);
+        setBackgroundImage(getRandomBackgroundImage());
+        
+
         return;
       }
     }
 
     setPreviewArtists(getRandomPreviewArtists());
+    setBackgroundImage(getRandomBackgroundImage());
   } catch {
     setPreviewArtists(getRandomPreviewArtists());
+    setBackgroundImage(getRandomBackgroundImage());
   }
 }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-black px-4 py-6 text-white md:px-8">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-[-12rem] h-[35rem] w-[35rem] -translate-x-1/2 rounded-full bg-lime-400/20 blur-[150px]" />
-        <div className="absolute bottom-[-10rem] left-[-8rem] h-[30rem] w-[30rem] rounded-full bg-purple-500/15 blur-[150px]" />
-        <div className="absolute right-[-8rem] top-56 h-[28rem] w-[28rem] rounded-full bg-green-500/10 blur-[140px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:64px_64px]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black" />
-      </div>
+ <div className="pointer-events-none absolute inset-0">
+  {backgroundImage && (
+    <>
+      <div
+        className="absolute inset-0 scale-105 bg-cover bg-center opacity-80"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+        }}
+      />
+
+      <div
+        className="absolute inset-0 scale-110 bg-cover bg-center opacity-40 blur-2xl"
+        style={{
+          backgroundImage: `url(${backgroundImage})`,
+        }}
+      />
+    </>
+  )}
+
+  <div className="absolute inset-0 bg-black/55" />
+
+  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/70" />
+
+  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
+
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(163,230,53,0.16),transparent_35%)]" />
+</div>
 
       <section className="relative mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl flex-col justify-center">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -251,8 +327,8 @@ useEffect(() => {
           <div className="relative">
             <div className="absolute inset-0 rounded-[2.5rem] bg-lime-400/20 blur-[80px]" />
 
-            <div className="relative overflow-hidden rounded-[2.5rem] border border-zinc-800 bg-zinc-950/90 p-6 shadow-2xl">
-              <div className="rounded-[2rem] border border-lime-400/20 bg-black p-5">
+            <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/55 p-6 shadow-2xl backdrop-blur-xl">
+              <div className="rounded-[2rem] border border-lime-400/20 bg-black/65 p-5 backdrop-blur-xl">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-black uppercase tracking-[0.35em] text-lime-300">
                     BeatGuess
