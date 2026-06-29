@@ -413,7 +413,11 @@ function QuizPlayContent() {
       : "song";
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const resultSavedRef = useRef(false);
+const resultSavedRef = useRef(false);
+const nextQuestionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+  null,
+);
+const timeoutQuestionIdRef = useRef<string | null>(null);
 
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -553,9 +557,10 @@ function QuizPlayContent() {
         );
 
         savePlayedTrackSegments(limitedHistory);
-
-        resultSavedRef.current = false;
-        setQuestions(generatedQuestions);
+resultSavedRef.current = false;
+clearNextQuestionTimeout();
+timeoutQuestionIdRef.current = null;
+setQuestions(generatedQuestions);
         setCurrentQuestionIndex(0);
         setSelectedTrackId(null);
         setScore(0);
@@ -604,6 +609,19 @@ function QuizPlayContent() {
     resultRank.title,
   ]);
 
+
+  function getNoAnswerText(language: Language) {
+  if (language === "fr") {
+    return "Aucune réponse";
+  }
+
+  if (language === "de") {
+    return "Keine Antwort";
+  }
+
+  return "No answer";
+}
+
   function formatTime(seconds: number) {
     const safeSeconds = Math.max(0, seconds);
     const minutes = Math.floor(safeSeconds / 60);
@@ -611,6 +629,52 @@ function QuizPlayContent() {
 
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
+
+  function clearNextQuestionTimeout() {
+  if (nextQuestionTimeoutRef.current) {
+    clearTimeout(nextQuestionTimeoutRef.current);
+    nextQuestionTimeoutRef.current = null;
+  }
+}
+
+function scheduleNextQuestion(delayMs = 900) {
+  clearNextQuestionTimeout();
+
+  nextQuestionTimeoutRef.current = setTimeout(() => {
+    nextQuestion();
+  }, delayMs);
+}
+
+function failCurrentQuestionByTimeout() {
+  if (
+    !currentQuestion ||
+    !currentCorrectOption ||
+    selectedTrackId !== null ||
+    timeoutQuestionIdRef.current === currentQuestion.id
+  ) {
+    return;
+  }
+
+  timeoutQuestionIdRef.current = currentQuestion.id;
+
+  setSelectedTrackId(-1);
+  setTypedAnswerStatus("wrong");
+
+  setAnswerResults((currentResults) => [
+    ...currentResults,
+    {
+      questionId: currentQuestion.id,
+      selectedTitle: getNoAnswerText(language),
+      selectedArtistName: "",
+      correctTitle: currentTypedCorrectAnswer,
+      correctArtistName:
+        activeTypedAnswerKind === "artist" ? "" : currentQuestion.artistName,
+      isCorrect: false,
+    },
+  ]);
+
+  scheduleNextQuestion(700);
+}
 
   function toggleAudio() {
     const audio = audioRef.current;
@@ -661,6 +725,7 @@ function QuizPlayContent() {
       setScore((currentScore) => currentScore + 100);
       setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
     }
+    
   }
   function submitTypedAnswer() {
     if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
@@ -700,9 +765,12 @@ function QuizPlayContent() {
       setScore((currentScore) => currentScore + 100);
       setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
     }
+
   }
 
   function nextQuestion() {
+    clearNextQuestionTimeout();
+timeoutQuestionIdRef.current = null;
     const audio = audioRef.current;
 
     if (audio) {
@@ -951,22 +1019,35 @@ function QuizPlayContent() {
                   key={currentQuestion.id}
                   src={currentQuestion.preview}
                   onLoadedMetadata={(event) => {
-                    const audio = event.currentTarget;
+  const audio = event.currentTarget;
 
-                    setAudioDuration(audio.duration);
-                    audio.currentTime = previewStartSeconds;
-                    setAudioCurrentTime(previewStartSeconds);
-                    setIsAudioPlaying(false);
-                  }}
+  setAudioDuration(audio.duration);
+  audio.currentTime = previewStartSeconds;
+  setAudioCurrentTime(previewStartSeconds);
+
+  void audio
+    .play()
+    .then(() => {
+      setIsAudioPlaying(true);
+    })
+    .catch(() => {
+      setIsAudioPlaying(false);
+    });
+}}
                   onTimeUpdate={(event) => {
                     const audio = event.currentTarget;
 
                     if (audio.currentTime >= previewEndSeconds) {
-                      audio.pause();
-                      setAudioCurrentTime(previewEndSeconds);
-                      setIsAudioPlaying(false);
-                      return;
-                    }
+  audio.pause();
+  setAudioCurrentTime(previewEndSeconds);
+  setIsAudioPlaying(false);
+
+  if (selectedTrackId === null) {
+    failCurrentQuestionByTimeout();
+  }
+
+  return;
+}
 
                     setAudioCurrentTime(audio.currentTime);
                   }}
