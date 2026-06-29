@@ -1,19 +1,19 @@
-﻿'use client';
+"use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { API_BASE_URL } from '@/lib/api';
-import { translations, type Language } from '@/lib/i18n';
-import { useLanguage } from '@/lib/use-language';
-import { usePlayer } from '@/lib/use-player';
-import { saveScoreHistoryItem } from '@/lib/score-history';
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { API_BASE_URL } from "@/lib/api";
+import { translations, type Language } from "@/lib/i18n";
+import { useLanguage } from "@/lib/use-language";
+import { usePlayer } from "@/lib/use-player";
+import { saveScoreHistoryItem } from "@/lib/score-history";
 
-type Difficulty = 'easy' | 'medium' | 'hard';
-type AnswerMode = 'mcq' | 'typed';
-type TypedAnswerKind = 'song' | 'artist' | 'album' | 'mixed';
-type ActiveTypedAnswerKind = 'song' | 'artist' | 'album';
+type Difficulty = "easy" | "medium" | "hard";
+type AnswerMode = "mcq" | "typed";
+type TypedAnswerKind = "song" | "artist" | "album" | "mixed";
+type ActiveTypedAnswerKind = "song" | "artist" | "album";
 
-type TypedAnswerStatus = 'correct' | 'wrong' | null;
+type TypedAnswerStatus = "correct" | "wrong" | null;
 
 type PlayedTrackSegments = Record<string, number[]>;
 
@@ -26,7 +26,7 @@ type QuizOption = {
 
 type QuizQuestion = {
   id: string;
-  type: 'guess_song_from_audio';
+  type: "guess_song_from_audio";
   difficulty: Difficulty;
   previewStartSeconds: number;
   previewDurationSeconds: number;
@@ -48,15 +48,15 @@ type AnswerResult = {
   isCorrect: boolean;
 };
 
-type QuizPlayTranslations = (typeof translations)[Language]['quizPlay'];
+type QuizPlayTranslations = (typeof translations)[Language]["quizPlay"];
 
-const PLAYED_TRACK_SEGMENTS_STORAGE_KEY = 'beatguess-played-track-segments';
+const PLAYED_TRACK_SEGMENTS_STORAGE_KEY = "beatguess-played-track-segments";
 function normalizeTypedAnswer(answer: string) {
   return answer
     .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "")
     .trim();
 }
 function getStableRandomIndex(seed: string, max: number) {
@@ -74,11 +74,11 @@ function getActiveTypedAnswerKind(
   currentQuestion: QuizQuestion | undefined,
   questionIndex: number,
 ): ActiveTypedAnswerKind {
-  if (typedAnswerKind !== 'mixed') {
+  if (typedAnswerKind !== "mixed") {
     return typedAnswerKind;
   }
 
-  const mixedKinds: ActiveTypedAnswerKind[] = ['song', 'artist', 'album'];
+  const mixedKinds: ActiveTypedAnswerKind[] = ["song", "artist", "album"];
   const seed = currentQuestion?.id ?? `question-${questionIndex}`;
 
   return mixedKinds[getStableRandomIndex(seed, mixedKinds.length)];
@@ -89,11 +89,11 @@ function getTypedCorrectAnswer(
   currentQuestion: QuizQuestion,
   currentCorrectOption: QuizOption,
 ) {
-  if (answerKind === 'artist') {
+  if (answerKind === "artist") {
     return currentQuestion.artistName || currentCorrectOption.artistName;
   }
 
-  if (answerKind === 'album') {
+  if (answerKind === "album") {
     return currentQuestion.albumTitle;
   }
 
@@ -113,11 +113,11 @@ function getTrackAnswerValue(
   currentQuestion: QuizQuestion,
   option: QuizOption,
 ) {
-  if (answerKind === 'artist') {
+  if (answerKind === "artist") {
     return option.artistName;
   }
 
-  if (answerKind === 'album') {
+  if (answerKind === "album") {
     return option.albumTitle || currentQuestion.albumTitle;
   }
 
@@ -152,7 +152,7 @@ function getUniqueMcqAnswerOptions(
         id: `${answerKind}-${normalizedLabel}-${option.id}`,
         trackId: option.id,
         label,
-        subtitle: answerKind === 'artist' ? '' : option.artistName,
+        subtitle: answerKind === "artist" ? "" : option.artistName,
         isCorrect:
           normalizeTypedAnswer(label) ===
           normalizeTypedAnswer(correctAnswerValue),
@@ -172,7 +172,7 @@ function readPlayedTrackSegments(): PlayedTrackSegments {
     const parsedValue = JSON.parse(rawValue);
 
     if (
-      typeof parsedValue !== 'object' ||
+      typeof parsedValue !== "object" ||
       parsedValue === null ||
       Array.isArray(parsedValue)
     ) {
@@ -193,23 +193,47 @@ function savePlayedTrackSegments(playedTrackSegments: PlayedTrackSegments) {
 }
 
 function getDifficultyLabel(difficulty: Difficulty, t: QuizPlayTranslations) {
-  if (difficulty === 'hard') {
+  if (difficulty === "hard") {
     return t.hard;
   }
 
-  if (difficulty === 'medium') {
+  if (difficulty === "medium") {
     return t.medium;
   }
 
   return t.easy;
 }
 
+function getGuestName(language: Language) {
+  if (language === "fr") {
+    return "Invité";
+  }
+
+  if (language === "de") {
+    return "Gast";
+  }
+
+  return "Guest";
+}
+
+function getScoresText(language: Language) {
+  if (language === "fr") {
+    return "Scores";
+  }
+
+  if (language === "de") {
+    return "Punkte";
+  }
+
+  return "Scores";
+}
+
 function getSavedForText(playerName: string, language: Language) {
-  if (language === 'fr') {
+  if (language === "fr") {
     return `Sauvegardé pour ${playerName}`;
   }
 
-  if (language === 'de') {
+  if (language === "de") {
     return `Gespeichert für ${playerName}`;
   }
 
@@ -221,7 +245,7 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     return {
       title: t.rankLegendTitle,
       description: t.rankLegendDescription,
-      emoji: '👑',
+      emoji: "👑",
     };
   }
 
@@ -229,7 +253,7 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     return {
       title: t.rankGeniusTitle,
       description: t.rankGeniusDescription,
-      emoji: '🧠',
+      emoji: "🧠",
     };
   }
 
@@ -237,7 +261,7 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     return {
       title: t.rankHitMasterTitle,
       description: t.rankHitMasterDescription,
-      emoji: '🔥',
+      emoji: "🔥",
     };
   }
 
@@ -245,7 +269,7 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     return {
       title: t.rankSolidEarTitle,
       description: t.rankSolidEarDescription,
-      emoji: '🎧',
+      emoji: "🎧",
     };
   }
 
@@ -253,7 +277,7 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     return {
       title: t.rankBeatHunterTitle,
       description: t.rankBeatHunterDescription,
-      emoji: '🎯',
+      emoji: "🎯",
     };
   }
 
@@ -261,7 +285,7 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     return {
       title: t.rankWarmupTitle,
       description: t.rankWarmupDescription,
-      emoji: '🔊',
+      emoji: "🔊",
     };
   }
 
@@ -269,14 +293,14 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     return {
       title: t.rankRookieTitle,
       description: t.rankRookieDescription,
-      emoji: '🌱',
+      emoji: "🌱",
     };
   }
 
   return {
     title: t.rankSilentTitle,
     description: t.rankSilentDescription,
-    emoji: '😅',
+    emoji: "😅",
   };
 }
 
@@ -286,11 +310,11 @@ function QuizPlayContent() {
   const { player } = usePlayer();
   const t = translations[language].quizPlay;
 
-  const artistIdsParam = searchParams.get('artists');
-  const difficultyParam = searchParams.get('difficulty');
-  const amountParam = searchParams.get('amount');
-  const answerModeParam = searchParams.get('answerMode');
-  const typedAnswerKindParam = searchParams.get('typedAnswerKind');
+  const artistIdsParam = searchParams.get("artists");
+  const difficultyParam = searchParams.get("difficulty");
+  const amountParam = searchParams.get("amount");
+  const answerModeParam = searchParams.get("answerMode");
+  const typedAnswerKindParam = searchParams.get("typedAnswerKind");
 
   const parsedAmount = amountParam ? Number(amountParam) : 10;
   const questionAmount = [5, 10, 15, 20].includes(parsedAmount)
@@ -298,16 +322,16 @@ function QuizPlayContent() {
     : 10;
 
   const difficulty: Difficulty =
-    difficultyParam === 'medium' || difficultyParam === 'hard'
+    difficultyParam === "medium" || difficultyParam === "hard"
       ? difficultyParam
-      : 'easy';
-      const answerMode: AnswerMode = answerModeParam === 'typed' ? 'typed' : 'mcq';
-      const typedAnswerKind: TypedAnswerKind =
-  typedAnswerKindParam === 'artist' ||
-  typedAnswerKindParam === 'album' ||
-  typedAnswerKindParam === 'mixed'
-    ? typedAnswerKindParam
-    : 'song';
+      : "easy";
+  const answerMode: AnswerMode = answerModeParam === "typed" ? "typed" : "mcq";
+  const typedAnswerKind: TypedAnswerKind =
+    typedAnswerKindParam === "artist" ||
+    typedAnswerKindParam === "album" ||
+    typedAnswerKindParam === "mixed"
+      ? typedAnswerKindParam
+      : "song";
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const resultSavedRef = useRef(false);
@@ -323,46 +347,46 @@ function QuizPlayContent() {
   const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
-  const [typedAnswer, setTypedAnswer] = useState('');
-const [typedAnswerStatus, setTypedAnswerStatus] =
-  useState<TypedAnswerStatus>(null);
+  const [typedAnswer, setTypedAnswer] = useState("");
+  const [typedAnswerStatus, setTypedAnswerStatus] =
+    useState<TypedAnswerStatus>(null);
 
   const currentQuestion = questions[currentQuestionIndex];
   const activeTypedAnswerKind = getActiveTypedAnswerKind(
-  typedAnswerKind,
-  currentQuestion,
-  currentQuestionIndex,
-);
-  
+    typedAnswerKind,
+    currentQuestion,
+    currentQuestionIndex,
+  );
+
   const currentCorrectOption =
-  currentQuestion?.options.find(
-    (option) => option.id === currentQuestion.correctTrackId,
-  ) ?? null;
+    currentQuestion?.options.find(
+      (option) => option.id === currentQuestion.correctTrackId,
+    ) ?? null;
   const currentTypedCorrectAnswer =
-  currentQuestion && currentCorrectOption
-    ? getTypedCorrectAnswer(
-        activeTypedAnswerKind,
-        currentQuestion,
-        currentCorrectOption,
-      )
-    : '';
-    const currentMcqAnswerOptions =
-  currentQuestion && currentCorrectOption
-    ? getUniqueMcqAnswerOptions(
-        activeTypedAnswerKind,
-        currentQuestion,
-        currentCorrectOption,
-      )
-    : [];
+    currentQuestion && currentCorrectOption
+      ? getTypedCorrectAnswer(
+          activeTypedAnswerKind,
+          currentQuestion,
+          currentCorrectOption,
+        )
+      : "";
+  const currentMcqAnswerOptions =
+    currentQuestion && currentCorrectOption
+      ? getUniqueMcqAnswerOptions(
+          activeTypedAnswerKind,
+          currentQuestion,
+          currentCorrectOption,
+        )
+      : [];
 
   const previewStartSeconds = currentQuestion?.previewStartSeconds ?? 0;
 
   const basePreviewDurationSeconds =
     currentQuestion?.previewDurationSeconds ??
-    (difficulty === 'hard' ? 10 : difficulty === 'medium' ? 20 : 30);
+    (difficulty === "hard" ? 10 : difficulty === "medium" ? 20 : 30);
 
   const effectivePreviewDurationSeconds =
-    difficulty === 'easy' && audioDuration > 0
+    difficulty === "easy" && audioDuration > 0
       ? Math.max(1, Math.floor(audioDuration - previewStartSeconds))
       : basePreviewDurationSeconds;
 
@@ -386,7 +410,7 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
 
   const progressText = useMemo(() => {
     if (questions.length === 0) {
-      return '0 / 0';
+      return "0 / 0";
     }
 
     return `${Math.min(currentQuestionIndex + 1, questions.length)} / ${
@@ -407,16 +431,16 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
 
       try {
         const artistIds = artistIdsParam
-          .split(',')
+          .split(",")
           .map((id) => Number(id))
           .filter(Boolean);
 
         const playedTrackSegments = readPlayedTrackSegments();
 
         const response = await fetch(`${API_BASE_URL}/quiz/generate`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             artistIds,
@@ -427,7 +451,7 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
         });
 
         if (!response.ok) {
-          throw new Error('Could not generate quiz');
+          throw new Error("Could not generate quiz");
         }
 
         const generatedQuestions: QuizQuestion[] = await response.json();
@@ -461,7 +485,7 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
         setAudioCurrentTime(0);
         setAudioDuration(0);
         setIsAudioPlaying(false);
-        setTypedAnswer('');
+        setTypedAnswer("");
         setTypedAnswerStatus(null);
       } catch {
         setHasError(true);
@@ -481,7 +505,7 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
 
     saveScoreHistoryItem({
       id: crypto.randomUUID(),
-      playerName: player?.name ?? 'Guest',
+      playerName: player?.name ?? getGuestName(language),
       score,
       correctAnswers,
       totalQuestions: questions.length,
@@ -506,7 +530,7 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
     const minutes = Math.floor(safeSeconds / 60);
     const remainingSeconds = safeSeconds % 60;
 
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
 
   function toggleAudio() {
@@ -535,69 +559,69 @@ const [typedAnswerStatus, setTypedAnswerStatus] =
   }
 
   function answerQuestion(selectedOption: McqAnswerOption) {
-  if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
-    return;
+    if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
+      return;
+    }
+
+    setSelectedTrackId(selectedOption.trackId);
+
+    setAnswerResults((currentResults) => [
+      ...currentResults,
+      {
+        questionId: currentQuestion.id,
+        selectedTitle: selectedOption.label,
+        selectedArtistName: selectedOption.subtitle,
+        correctTitle: currentTypedCorrectAnswer,
+        correctArtistName:
+          activeTypedAnswerKind === "artist" ? "" : currentQuestion.artistName,
+        isCorrect: selectedOption.isCorrect,
+      },
+    ]);
+
+    if (selectedOption.isCorrect) {
+      setScore((currentScore) => currentScore + 100);
+      setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
+    }
   }
-
-  setSelectedTrackId(selectedOption.trackId);
-
-  setAnswerResults((currentResults) => [
-    ...currentResults,
-    {
-      questionId: currentQuestion.id,
-      selectedTitle: selectedOption.label,
-      selectedArtistName: selectedOption.subtitle,
-      correctTitle: currentTypedCorrectAnswer,
-      correctArtistName:
-        activeTypedAnswerKind === 'artist' ? '' : currentQuestion.artistName,
-      isCorrect: selectedOption.isCorrect,
-    },
-  ]);
-
-  if (selectedOption.isCorrect) {
-    setScore((currentScore) => currentScore + 100);
-    setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
-  }
-}
   function submitTypedAnswer() {
-  if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
-    return;
+    if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
+      return;
+    }
+
+    const cleanTypedAnswer = typedAnswer.trim();
+
+    if (!cleanTypedAnswer) {
+      return;
+    }
+
+    if (!currentTypedCorrectAnswer) {
+      return;
+    }
+
+    const isCorrect =
+      normalizeTypedAnswer(cleanTypedAnswer) ===
+      normalizeTypedAnswer(currentTypedCorrectAnswer);
+
+    setSelectedTrackId(currentQuestion.correctTrackId);
+    setTypedAnswerStatus(isCorrect ? "correct" : "wrong");
+
+    setAnswerResults((currentResults) => [
+      ...currentResults,
+      {
+        questionId: currentQuestion.id,
+        selectedTitle: cleanTypedAnswer,
+        selectedArtistName: "",
+        correctTitle: currentCorrectOption.title,
+        correctArtistName: currentCorrectOption.artistName,
+        isCorrect,
+      },
+    ]);
+
+    if (isCorrect) {
+      setScore((currentScore) => currentScore + 100);
+      setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
+    }
   }
-
-  const cleanTypedAnswer = typedAnswer.trim();
-
-  if (!cleanTypedAnswer) {
-    return;
-  }
-
- if (!currentTypedCorrectAnswer) {
-  return;
-}
-
-const isCorrect =
-  normalizeTypedAnswer(cleanTypedAnswer) ===
-  normalizeTypedAnswer(currentTypedCorrectAnswer);
-
-  setSelectedTrackId(currentQuestion.correctTrackId);
-  setTypedAnswerStatus(isCorrect ? 'correct' : 'wrong');
-
-  setAnswerResults((currentResults) => [
-    ...currentResults,
-    {
-      questionId: currentQuestion.id,
-      selectedTitle: cleanTypedAnswer,
-      selectedArtistName: '',
-      correctTitle: currentCorrectOption.title,
-      correctArtistName: currentCorrectOption.artistName,
-      isCorrect,
-    },
-  ]);
-
-  if (isCorrect) {
-    setScore((currentScore) => currentScore + 100);
-    setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
-  }
-}
 
   function nextQuestion() {
     const audio = audioRef.current;
@@ -611,7 +635,7 @@ const isCorrect =
     setAudioDuration(0);
     setIsAudioPlaying(false);
     setSelectedTrackId(null);
-    setTypedAnswer('');
+    setTypedAnswer("");
     setTypedAnswerStatus(null);
     setCurrentQuestionIndex((currentIndex) => currentIndex + 1);
   }
@@ -660,15 +684,16 @@ const isCorrect =
             <p className="mt-3 text-zinc-400">{resultRank.description}</p>
 
             <p className="mt-3 text-sm text-lime-300">
-              {getSavedForText(player?.name ?? 'Guest', language)}
+              {getSavedForText(
+                player?.name ?? getGuestName(language),
+                language,
+              )}
             </p>
 
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <div className="rounded-2xl border border-zinc-800 bg-black p-5">
                 <p className="text-sm text-zinc-500">{t.score}</p>
-                <p className="mt-2 text-3xl font-bold text-lime-300">
-                  {score}
-                </p>
+                <p className="mt-2 text-3xl font-bold text-lime-300">{score}</p>
               </div>
 
               <div className="rounded-2xl border border-zinc-800 bg-black p-5">
@@ -697,19 +722,19 @@ const isCorrect =
                     key={answer.questionId}
                     className={`rounded-2xl border p-4 ${
                       answer.isCorrect
-                        ? 'border-lime-400/40 bg-lime-400/10'
-                        : 'border-red-400/40 bg-red-500/10'
+                        ? "border-lime-400/40 bg-lime-400/10"
+                        : "border-red-400/40 bg-red-500/10"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
                       <p className="font-semibold">
-                        {t.question} {index + 1}{' '}
-                        {answer.isCorrect ? '✅' : '❌'}
+                        {t.question} {index + 1}{" "}
+                        {answer.isCorrect ? "✅" : "❌"}
                       </p>
 
                       <p
                         className={`text-sm font-semibold ${
-                          answer.isCorrect ? 'text-lime-300' : 'text-red-300'
+                          answer.isCorrect ? "text-lime-300" : "text-red-300"
                         }`}
                       >
                         {answer.isCorrect ? t.correct : t.wrong}
@@ -719,20 +744,26 @@ const isCorrect =
                     <p className="mt-3 text-sm text-zinc-400">
                       {t.correctAnswer}
                     </p>
-                   <p className="font-semibold text-white">
-  {answer.correctTitle}
-  {answer.correctArtistName && (
-    <span className="text-zinc-500"> — {answer.correctArtistName}</span>
-  )}
-</p>
+                    <p className="font-semibold text-white">
+                      {answer.correctTitle}
+                      {answer.correctArtistName && (
+                        <span className="text-zinc-500">
+                          {" "}
+                          — {answer.correctArtistName}
+                        </span>
+                      )}
+                    </p>
 
                     <p className="mt-3 text-sm text-zinc-400">{t.yourAnswer}</p>
                     <p className="font-semibold text-white">
-  {answer.selectedTitle}
-  {answer.selectedArtistName && (
-    <span className="text-zinc-500"> — {answer.selectedArtistName}</span>
-  )}
-</p>
+                      {answer.selectedTitle}
+                      {answer.selectedArtistName && (
+                        <span className="text-zinc-500">
+                          {" "}
+                          — {answer.selectedArtistName}
+                        </span>
+                      )}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -758,7 +789,7 @@ const isCorrect =
                 href="/scores"
                 className="rounded-full border border-lime-400 px-6 py-3 font-semibold text-lime-300"
               >
-                Scores
+                {getScoresText(language)}
               </a>
 
               <a
@@ -812,24 +843,24 @@ const isCorrect =
 
             <div className="flex-1">
               <h1 className="text-3xl font-bold">
-  {answerMode === 'typed'
-    ? activeTypedAnswerKind === 'artist'
-      ? t.typeArtistTitle
-      : activeTypedAnswerKind === 'album'
-        ? t.typeAlbumTitle
-        : t.typeSongTitle
-    : t.guessTitle}
-</h1>
+                {answerMode === "typed"
+                  ? activeTypedAnswerKind === "artist"
+                    ? t.typeArtistTitle
+                    : activeTypedAnswerKind === "album"
+                      ? t.typeAlbumTitle
+                      : t.typeSongTitle
+                  : t.guessTitle}
+              </h1>
 
-<p className="mt-2 text-zinc-400">
-  {answerMode === 'typed'
-    ? activeTypedAnswerKind === 'artist'
-      ? t.typeArtistDescription
-      : activeTypedAnswerKind === 'album'
-        ? t.typeAlbumDescription
-        : t.typeSongDescription
-    : t.guessDescription}
-</p>
+              <p className="mt-2 text-zinc-400">
+                {answerMode === "typed"
+                  ? activeTypedAnswerKind === "artist"
+                    ? t.typeArtistDescription
+                    : activeTypedAnswerKind === "album"
+                      ? t.typeAlbumDescription
+                      : t.typeSongDescription
+                  : t.guessDescription}
+              </p>
 
               <div className="mt-6">
                 <audio
@@ -869,7 +900,7 @@ const isCorrect =
                       onClick={toggleAudio}
                       className="flex h-10 w-10 items-center justify-center rounded-full bg-lime-400 font-bold text-black"
                     >
-                      {isAudioPlaying ? 'Ⅱ' : '▶'}
+                      {isAudioPlaying ? "Ⅱ" : "▶"}
                     </button>
 
                     <div className="flex-1">
@@ -890,7 +921,7 @@ const isCorrect =
                     </div>
 
                     <p className="min-w-[90px] text-right text-sm text-zinc-300">
-                      {formatTime(displayedCurrentTime)} /{' '}
+                      {formatTime(displayedCurrentTime)} /{" "}
                       {formatTime(effectivePreviewDurationSeconds)}
                     </p>
                   </div>
@@ -898,108 +929,110 @@ const isCorrect =
               </div>
 
               <p className="mt-3 text-sm text-zinc-500">
-                {t.difficulty}: {getDifficultyLabel(difficulty, t)} ·{' '}
-                {t.segmentStartsAt}: {previewStartSeconds}s · {t.previewLimit}:{' '}
+                {t.difficulty}: {getDifficultyLabel(difficulty, t)} ·{" "}
+                {t.segmentStartsAt}: {previewStartSeconds}s · {t.previewLimit}:{" "}
                 {effectivePreviewDurationSeconds}s
               </p>
             </div>
           </div>
         </div>
 
-       {answerMode === 'mcq' ? (
-  <div className="mt-6 grid gap-4 md:grid-cols-2">
-    {currentMcqAnswerOptions.map((option) => {
-     const isSelected = selectedTrackId === option.trackId;
-     const isCorrect = option.isCorrect;
-      const showResult = selectedTrackId !== null;
+        {answerMode === "mcq" ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {currentMcqAnswerOptions.map((option) => {
+              const isSelected = selectedTrackId === option.trackId;
+              const isCorrect = option.isCorrect;
+              const showResult = selectedTrackId !== null;
 
-      let resultClass =
-        'border-zinc-800 bg-zinc-950 hover:border-lime-400';
+              let resultClass =
+                "border-zinc-800 bg-zinc-950 hover:border-lime-400";
 
-      if (showResult && isCorrect) {
-        resultClass = 'border-lime-400 bg-lime-400/20';
-      }
+              if (showResult && isCorrect) {
+                resultClass = "border-lime-400 bg-lime-400/20";
+              }
 
-      if (showResult && isSelected && !isCorrect) {
-        resultClass = 'border-red-400 bg-red-500/20';
-      }
+              if (showResult && isSelected && !isCorrect) {
+                resultClass = "border-red-400 bg-red-500/20";
+              }
 
-      return (
-        <button
-          key={option.id}
-          type="button"
-          onClick={() => answerQuestion(option)}
-          disabled={showResult}
-          className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
-        >
-          <h2 className="text-lg font-semibold">{option.label}</h2>
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => answerQuestion(option)}
+                  disabled={showResult}
+                  className={`rounded-2xl border p-5 text-left transition ${resultClass}`}
+                >
+                  <h2 className="text-lg font-semibold">{option.label}</h2>
 
-{showResult && option.subtitle && (
-  <p className="mt-1 text-sm text-zinc-400">
-    {option.subtitle}
-  </p>
-)}
-        </button>
-      );
-    })}
-  </div>
-) : (
-  <div className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
-    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
-      {t.typeYourAnswer}
-    </p>
+                  {showResult && option.subtitle && (
+                    <p className="mt-1 text-sm text-zinc-400">
+                      {option.subtitle}
+                    </p>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
+              {t.typeYourAnswer}
+            </p>
 
-    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-      <input
-        value={typedAnswer}
-        onChange={(event) => setTypedAnswer(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            submitTypedAnswer();
-          }
-        }}
-        disabled={selectedTrackId !== null}
-        placeholder={
-  activeTypedAnswerKind === 'artist'
-    ? t.typedArtistPlaceholder
-    : activeTypedAnswerKind === 'album'
-      ? t.typedAlbumPlaceholder
-      : t.typedAnswerPlaceholder
-}
-        className="flex-1 rounded-2xl border border-zinc-800 bg-black px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-lime-400 disabled:cursor-not-allowed disabled:opacity-60"
-      />
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <input
+                value={typedAnswer}
+                onChange={(event) => setTypedAnswer(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    submitTypedAnswer();
+                  }
+                }}
+                disabled={selectedTrackId !== null}
+                placeholder={
+                  activeTypedAnswerKind === "artist"
+                    ? t.typedArtistPlaceholder
+                    : activeTypedAnswerKind === "album"
+                      ? t.typedAlbumPlaceholder
+                      : t.typedAnswerPlaceholder
+                }
+                className="flex-1 rounded-2xl border border-zinc-800 bg-black px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-lime-400 disabled:cursor-not-allowed disabled:opacity-60"
+              />
 
-      <button
-        type="button"
-        onClick={submitTypedAnswer}
-        disabled={!typedAnswer.trim() || selectedTrackId !== null}
-        className="rounded-2xl bg-lime-400 px-6 py-4 font-black text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {t.submitAnswer}
-      </button>
-    </div>
+              <button
+                type="button"
+                onClick={submitTypedAnswer}
+                disabled={!typedAnswer.trim() || selectedTrackId !== null}
+                className="rounded-2xl bg-lime-400 px-6 py-4 font-black text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {t.submitAnswer}
+              </button>
+            </div>
 
-    {typedAnswerStatus && (
-      <div
-        className={`mt-4 rounded-2xl border p-4 ${
-          typedAnswerStatus === 'correct'
-            ? 'border-lime-400/40 bg-lime-400/10 text-lime-200'
-            : 'border-red-400/40 bg-red-500/10 text-red-200'
-        }`}
-      >
-        <p className="font-bold">
-          {typedAnswerStatus === 'correct' ? t.typedCorrect : t.typedWrong}
-        </p>
+            {typedAnswerStatus && (
+              <div
+                className={`mt-4 rounded-2xl border p-4 ${
+                  typedAnswerStatus === "correct"
+                    ? "border-lime-400/40 bg-lime-400/10 text-lime-200"
+                    : "border-red-400/40 bg-red-500/10 text-red-200"
+                }`}
+              >
+                <p className="font-bold">
+                  {typedAnswerStatus === "correct"
+                    ? t.typedCorrect
+                    : t.typedWrong}
+                </p>
 
-        {typedAnswerStatus === 'wrong' && currentCorrectOption && (
-          <p className="mt-2 text-sm">
-           {t.correctWas}: {currentTypedCorrectAnswer}
-          </p>
+                {typedAnswerStatus === "wrong" && currentCorrectOption && (
+                  <p className="mt-2 text-sm">
+                    {t.correctWas}: {currentTypedCorrectAnswer}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         )}
-      </div>
-    )}
-  </div>
-)}
 
         <div className="mt-8 flex items-center justify-between">
           <p className="text-xl font-semibold">
@@ -1026,7 +1059,7 @@ export default function QuizPlayPage() {
     <Suspense
       fallback={
         <main className="flex min-h-screen items-center justify-center bg-black text-white">
-          Loading...
+          BeatGuess...
         </main>
       }
     >
