@@ -303,6 +303,85 @@ function getResultRank(accuracy: number, t: QuizPlayTranslations) {
     emoji: "😅",
   };
 }
+  
+const quizBackgroundTiles = [
+  {
+    label: "BEAT",
+    icon: "♪",
+    background:
+      "linear-gradient(135deg, rgba(236,72,153,0.76), rgba(34,211,238,0.42))",
+  },
+  {
+    label: "QUIZ",
+    icon: "♫",
+    background:
+      "linear-gradient(135deg, rgba(163,230,53,0.76), rgba(59,130,246,0.42))",
+  },
+  {
+    label: "HITS",
+    icon: "♬",
+    background:
+      "linear-gradient(135deg, rgba(168,85,247,0.78), rgba(236,72,153,0.38))",
+  },
+  {
+    label: "PLAY",
+    icon: "♪",
+    background:
+      "linear-gradient(135deg, rgba(34,211,238,0.72), rgba(14,165,233,0.34))",
+  },
+  {
+    label: "DROP",
+    icon: "♫",
+    background:
+      "linear-gradient(135deg, rgba(249,115,22,0.70), rgba(236,72,153,0.42))",
+  },
+  {
+    label: "SCORE",
+    icon: "♬",
+    background:
+      "linear-gradient(135deg, rgba(132,204,22,0.72), rgba(34,211,238,0.36))",
+  },
+];
+
+function QuizMusicBackground() {
+  const tiles = Array.from({ length: 120 }, (_, index) => {
+    return quizBackgroundTiles[index % quizBackgroundTiles.length];
+  });
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-[#160020] via-[#07152f] to-[#020617]" />
+
+      <div className="absolute -left-32 -top-40 grid w-[150%] rotate-[-8deg] grid-cols-4 gap-5 opacity-90 md:grid-cols-6 lg:grid-cols-8">
+        {tiles.map((tile, index) => (
+          <div
+            key={index}
+            className={`relative h-40 overflow-hidden rounded-[1.5rem] border border-white/10 shadow-2xl md:h-52 ${
+              index % 2 === 0 ? "translate-y-10" : "-translate-y-4"
+            }`}
+            style={{
+              background: tile.background,
+            }}
+          >
+            <div className="flex h-full flex-col justify-between p-4">
+              <span className="text-5xl font-black text-white/85">
+                {tile.icon}
+              </span>
+
+              <span className="text-2xl font-black tracking-[0.18em] text-white/80">
+                {tile.label}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="absolute inset-0 bg-gradient-to-r from-black/58 via-black/35 to-black/50" />
+<div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/62" />
+<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.22),transparent_35%),radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_bottom,rgba(163,230,53,0.18),transparent_42%)]" />
+    </div>
+  );
+}
 
 function QuizPlayContent() {
   const searchParams = useSearchParams();
@@ -668,8 +747,10 @@ function QuizPlayContent() {
 
   if (isFinished) {
     return (
-      <main className="min-h-screen bg-black px-6 py-10 text-white">
-        <section className="mx-auto max-w-3xl">
+  <main className="relative min-h-screen overflow-hidden bg-[#020617] px-4 pb-32 pt-24 text-white md:px-6 md:py-10">
+    <QuizMusicBackground />
+
+    <section className="relative mx-auto max-w-4xl">
           <div className="rounded-3xl border border-lime-400/30 bg-zinc-950 p-8 text-center">
             <p className="text-sm uppercase tracking-[0.3em] text-lime-300">
               {t.quizFinished}
@@ -814,8 +895,10 @@ function QuizPlayContent() {
   }
 
   return (
-    <main className="min-h-screen bg-black px-6 py-10 text-white">
-      <section className="mx-auto max-w-4xl">
+  <main className="relative min-h-screen overflow-hidden bg-[#020617] px-4 pb-32 pt-24 text-white md:px-6 md:py-10">
+    <QuizMusicBackground />
+
+    <section className="relative mx-auto max-w-5xl">
         <a href="/quiz/custom-mix" className="text-sm text-lime-300">
           ← {t.changeArtists}
         </a>
@@ -827,9 +910,9 @@ function QuizPlayContent() {
           <p className="text-sm text-zinc-400">{progressText}</p>
         </div>
 
-        <div className="mt-8 rounded-3xl border border-zinc-800 bg-zinc-950 p-6 md:p-8">
+        <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/35 p-6 shadow-[0_0_80px_rgba(34,211,238,0.10)] backdrop-blur-xl md:p-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-center">
-            <div className="flex h-32 w-32 items-center justify-center rounded-3xl border border-zinc-800 bg-zinc-900">
+            <div className="flex h-32 w-32 items-center justify-center rounded-3xl border border-white/10 bg-black/45 shadow-[0_0_40px_rgba(163,230,53,0.10)] backdrop-blur-xl">
               {selectedTrackId === null ? (
                 <span className="text-4xl">🎵</span>
               ) : (
@@ -893,7 +976,7 @@ function QuizPlayContent() {
                   }}
                 />
 
-                <div className="rounded-full bg-zinc-900 p-4">
+                <div className="rounded-full border border-white/10 bg-black/50 p-4 backdrop-blur-xl">
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
@@ -944,8 +1027,8 @@ function QuizPlayContent() {
               const isCorrect = option.isCorrect;
               const showResult = selectedTrackId !== null;
 
-              let resultClass =
-                "border-zinc-800 bg-zinc-950 hover:border-lime-400";
+            let resultClass =
+  "border-white/10 bg-black/35 backdrop-blur-xl hover:border-lime-400 hover:bg-white/10";
 
               if (showResult && isCorrect) {
                 resultClass = "border-lime-400 bg-lime-400/20";
@@ -975,7 +1058,7 @@ function QuizPlayContent() {
             })}
           </div>
         ) : (
-          <div className="mt-6 rounded-3xl border border-zinc-800 bg-zinc-950 p-5">
+          <div className="mt-6 rounded-3xl border border-white/10 bg-black/55 p-5 shadow-[0_0_70px_rgba(236,72,153,0.08)] backdrop-blur-xl">
             <p className="text-sm font-semibold uppercase tracking-[0.25em] text-zinc-500">
               {t.typeYourAnswer}
             </p>
@@ -997,7 +1080,7 @@ function QuizPlayContent() {
                       ? t.typedAlbumPlaceholder
                       : t.typedAnswerPlaceholder
                 }
-                className="flex-1 rounded-2xl border border-zinc-800 bg-black px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-lime-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex-1 rounded-2xl border border-white/10 bg-black/35 px-5 py-4 text-white outline-none placeholder:text-zinc-600 focus:border-lime-400 disabled:cursor-not-allowed disabled:opacity-60"
               />
 
               <button
