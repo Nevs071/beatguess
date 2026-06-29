@@ -4,6 +4,7 @@ import { LanguageProvider } from '@/lib/language-provider';
 import { LanguageSwitcher } from '@/components/language-switcher';
 import { PlayerProvider } from '@/lib/player-provider';
 import { PlayerWidget } from '@/components/player-widget';
+import { AuthAccountWidget } from '@/components/auth-account-widget';
 
 export const metadata: Metadata = {
   title: 'BeatGuess',
@@ -22,6 +23,7 @@ export default function RootLayout({
           <PlayerProvider>
             <LanguageSwitcher />
             <PlayerWidget />
+            <AuthAccountWidget />
             {children}
           </PlayerProvider>
         </LanguageProvider>
