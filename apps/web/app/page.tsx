@@ -249,34 +249,50 @@ useEffect(() => {
   }
 }, []);
 
+const recentArtistImages = previewArtists
+  .map((artist) => artist.image)
+  .filter(Boolean) as string[];
+
+const homeBackgroundImages = Array.from({ length: 120 }, (_, index) => {
+  const images =
+    recentArtistImages.length > 0
+      ? [...recentArtistImages, ...FALLBACK_BACKGROUND_IMAGES]
+      : FALLBACK_BACKGROUND_IMAGES;
+
+  return images[index % images.length];
+});
+
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-black px-4 pb-28 pt-6 text-white md:px-8 md:pb-10">
- <div className="pointer-events-none absolute inset-0">
-  {backgroundImage && (
-    <>
-      <div
-        className="absolute inset-0 scale-105 bg-cover bg-center opacity-80"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-        }}
-      />
+ <div className="pointer-events-none absolute inset-0 overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-br from-[#160020] via-[#07152f] to-[#020617]" />
 
-      <div
-        className="absolute inset-0 scale-110 bg-cover bg-center opacity-40 blur-2xl"
-        style={{
-          backgroundImage: `url(${backgroundImage})`,
-        }}
-      />
-    </>
+  {backgroundImage && (
+    <div
+      className="absolute inset-0 scale-105 bg-cover bg-center opacity-25 blur-sm"
+      style={{
+        backgroundImage: `url(${backgroundImage})`,
+      }}
+    />
   )}
 
-  <div className="absolute inset-0 bg-black/55" />
+  <div className="absolute -left-32 -top-40 grid w-[150%] rotate-[-8deg] grid-cols-4 gap-5 opacity-55 md:grid-cols-6 lg:grid-cols-8">
+    {homeBackgroundImages.map((image, index) => (
+      <div
+        key={`${image}-${index}`}
+        className={`h-40 rounded-[1.5rem] border border-white/10 bg-zinc-900 bg-cover bg-center shadow-2xl md:h-52 ${
+          index % 2 === 0 ? 'translate-y-10' : '-translate-y-4'
+        }`}
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(0,0,0,0.04), rgba(0,0,0,0.35)), url(${image})`,
+        }}
+      />
+    ))}
+  </div>
 
-  <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-black/70" />
-
-  <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
-
-  <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(163,230,53,0.16),transparent_35%)]" />
+  <div className="absolute inset-0 bg-gradient-to-r from-black/58 via-black/35 to-black/50" />
+  <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/30 to-black/62" />
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.22),transparent_35%),radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_bottom,rgba(163,230,53,0.18),transparent_42%)]" />
 </div>
 
       <section className="relative mx-auto flex max-w-7xl flex-col py-20 md:py-24 lg:min-h-[calc(100vh-3rem)] lg:justify-center">
@@ -311,7 +327,7 @@ useEffect(() => {
               </Link>
             </div>
 
-            <div className="mt-7 inline-flex rounded-2xl border border-zinc-800 bg-zinc-950/80 px-5 py-3 text-sm text-zinc-400">
+            <div className="mt-7 inline-flex rounded-2xl border border-zinc-800 bg-black/50 backdrop-blur-xl px-5 py-3 text-sm text-zinc-400">
               {isCheckingBackend ? (
                 <span>{text.checking}</span>
               ) : healthStatus ? (
@@ -343,17 +359,17 @@ useEffect(() => {
   </p>
 
   <div className="mt-4 grid grid-cols-3 gap-3">
-    <div className="rounded-2xl border border-zinc-800 bg-black/70 p-3 text-center">
+    <div className="rounded-2xl border border-zinc-800 bg-black/45 backdrop-blur-xl p-3 text-center">
       <p className="text-2xl">🎧</p>
       <p className="mt-1 text-xs font-bold text-zinc-300">Listen</p>
     </div>
 
-    <div className="rounded-2xl border border-zinc-800 bg-black/70 p-3 text-center">
+    <div className="rounded-2xl border border-zinc-800 bg-black/45 backdrop-blur-xl p-3 text-center">
       <p className="text-2xl">🎯</p>
       <p className="mt-1 text-xs font-bold text-zinc-300">Guess</p>
     </div>
 
-    <div className="rounded-2xl border border-zinc-800 bg-black/70 p-3 text-center">
+    <div className="rounded-2xl border border-zinc-800 bg-black/45 backdrop-blur-xl p-3 text-center">
       <p className="text-2xl">🏆</p>
       <p className="mt-1 text-xs font-bold text-zinc-300">Score</p>
     </div>
@@ -370,14 +386,14 @@ useEffect(() => {
                   </div>
 
                   <div className="space-y-3">
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                    <div className="rounded-2xl border border-zinc-800 bg-black/50 backdrop-blur-xl p-4">
                       <p className="text-xs text-zinc-500">Question type</p>
                       <p className="mt-1 text-lg font-black text-white">
                         Song · Artist · Album
                       </p>
                     </div>
 
-                    <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                    <div className="rounded-2xl border border-zinc-800 bg-black/50 backdrop-blur-xl p-4">
                       <p className="text-xs text-zinc-500">Mode</p>
                       <p className="mt-1 text-lg font-black text-lime-300">
                         MCQ + Typing
@@ -467,7 +483,7 @@ useEffect(() => {
           ].map((item) => (
             <div
               key={item}
-              className="rounded-full border border-zinc-800 bg-black/70 px-4 py-2 text-sm font-bold text-zinc-300"
+              className="rounded-full border border-zinc-800bg-black/45 backdrop-blur-xl px-4 py-2 text-sm font-bold text-zinc-300"
             >
               {item}
             </div>

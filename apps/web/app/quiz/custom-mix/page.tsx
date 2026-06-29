@@ -46,6 +46,7 @@ export default function CustomMixPage() {
   const [answerMode, setAnswerMode] = useState<AnswerMode>('mcq');
   const [typedAnswerKind, setTypedAnswerKind] =
     useState<TypedAnswerKind>('song');
+  
 
   const setupSteps: SetupStep[] = [
     'artists',
@@ -168,7 +169,61 @@ export default function CustomMixPage() {
       description: 'Only 10 seconds. No mercy.',
     },
   ];
+  const defaultMusicTiles = [
+  {
+    label: 'AFRO',
+    icon: '♪',
+    background:
+      'linear-gradient(135deg, rgba(236,72,153,0.78), rgba(34,211,238,0.42))',
+  },
+  {
+    label: 'POP',
+    icon: '♫',
+    background:
+      'linear-gradient(135deg, rgba(163,230,53,0.76), rgba(59,130,246,0.42))',
+  },
+  {
+    label: 'RAP',
+    icon: '♬',
+    background:
+      'linear-gradient(135deg, rgba(168,85,247,0.78), rgba(236,72,153,0.38))',
+  },
+  {
+    label: 'RNB',
+    icon: '♪',
+    background:
+      'linear-gradient(135deg, rgba(34,211,238,0.72), rgba(14,165,233,0.34))',
+  },
+  {
+    label: 'HITS',
+    icon: '♫',
+    background:
+      'linear-gradient(135deg, rgba(249,115,22,0.70), rgba(236,72,153,0.42))',
+  },
+  {
+    label: 'BEAT',
+    icon: '♬',
+    background:
+      'linear-gradient(135deg, rgba(132,204,22,0.72), rgba(34,211,238,0.36))',
+  },
+];
 
+const realArtistImages = [
+  ...selectedArtists.map((artist) => artist.imageLarge || artist.image),
+  ...artists.slice(0, 12).map((artist) => artist.imageLarge || artist.image),
+].filter(Boolean);
+
+const backgroundTiles = Array.from({ length: 120 }, (_, index) => {
+  const defaultTile = defaultMusicTiles[index % defaultMusicTiles.length];
+
+  return {
+    ...defaultTile,
+    image:
+      realArtistImages.length > 0
+        ? realArtistImages[index % realArtistImages.length]
+        : '',
+  };
+});
     async function searchArtists() {
     if (query.trim().length < 2) {
       setError(t.errorShortQuery);
@@ -299,8 +354,8 @@ export default function CustomMixPage() {
             onClick={() => onSelect(option.value)}
             className={`rounded-[2rem] border p-6 text-left transition hover:border-lime-400 ${
               selectedValue === option.value
-                ? 'border-lime-400 bg-lime-400/10 shadow-[0_0_40px_rgba(132,204,22,0.12)]'
-                : 'border-zinc-800 bg-black'
+  ? 'border-lime-400 bg-gradient-to-br from-lime-400/15 via-cyan-400/10 to-pink-500/10 shadow-[0_0_50px_rgba(34,211,238,0.12)]'
+  : 'border-white/10 bg-[#0b1026]/80'
             }`}
           >
             <p className="text-4xl font-black text-lime-300">
@@ -332,7 +387,7 @@ export default function CustomMixPage() {
           Search your favorite artists and create the music world for this quiz.
         </p>
 
-        <div className="mt-8 rounded-[2rem] border border-zinc-800 bg-black p-4 md:p-5">
+        <div className="mt-8 rounded-[2rem] border border-zinc-800 bg-black/65 p-4 md:p-5">
           <div className="flex flex-col gap-3 md:flex-row">
             <input
               value={query}
@@ -343,7 +398,7 @@ export default function CustomMixPage() {
                 }
               }}
               placeholder={t.searchPlaceholder}
-              className="min-h-16 flex-1 rounded-2xl border border-zinc-800 bg-zinc-950 px-5 text-lg text-white outline-none placeholder:text-zinc-600 focus:border-lime-400"
+              className="min-h-16 flex-1 rounded-2xl border border-zinc-800 bg-black/55 px-5 text-lg text-white outline-none placeholder:text-zinc-600 focus:border-lime-400"
             />
 
             <button
@@ -367,13 +422,13 @@ export default function CustomMixPage() {
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black">Search results</h2>
 
-            <span className="rounded-full border border-zinc-800 bg-black px-4 py-2 text-sm text-zinc-400">
+            <span className="rounded-full border border-zinc-800 bg-black/65 px-4 py-2 text-sm text-zinc-400">
               {artists.length} results
             </span>
           </div>
 
           {artists.length === 0 ? (
-            <div className="mt-5 rounded-[2rem] border border-dashed border-zinc-800 bg-black px-6 py-14 text-center">
+            <div className="mt-5 rounded-[2rem] border border-dashed border-zinc-800 bg-black/65 px-6 py-14 text-center">
               <p className="text-5xl">♪</p>
               <h3 className="mt-5 text-2xl font-black">No artists yet</h3>
               <p className="mt-2 text-zinc-500">
@@ -392,7 +447,7 @@ export default function CustomMixPage() {
                     key={artist.id}
                     type="button"
                     onClick={() => selectArtist(artist)}
-                    className={`group overflow-hidden rounded-[1.75rem] border bg-black text-left transition hover:border-lime-400 ${
+                    className={`group overflow-hidden rounded-[1.75rem] border bg-black/65 text-left transition hover:border-lime-400 ${
                       isSelected ? 'border-lime-400' : 'border-zinc-800'
                     }`}
                   >
@@ -439,13 +494,13 @@ export default function CustomMixPage() {
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black">Your lineup</h2>
 
-            <span className="rounded-full border border-zinc-800 bg-black px-4 py-2 text-sm text-zinc-400">
+            <span className="rounded-full border border-zinc-800 bg-black/65 px-4 py-2 text-sm text-zinc-400">
               {selectedArtists.length} selected
             </span>
           </div>
 
           {selectedArtists.length === 0 ? (
-            <div className="mt-5 rounded-[2rem] border border-dashed border-zinc-800 bg-black px-6 py-12 text-center">
+            <div className="mt-5 rounded-[2rem] border border-dashed border-zinc-800 bg-black/65 px-6 py-12 text-center">
               <p className="text-5xl">♪</p>
               <h3 className="mt-4 text-xl font-black">
                 Your quiz lineup is empty
@@ -590,7 +645,7 @@ export default function CustomMixPage() {
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <div className="rounded-[2rem] border border-zinc-800 bg-black p-6">
+          <div className="rounded-[2rem] border border-zinc-800 bg-black/65 p-6">
             <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
               Artists
             </p>
@@ -612,34 +667,34 @@ export default function CustomMixPage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-zinc-800 bg-black p-6">
+          <div className="rounded-[2rem] border border-zinc-800 bg-black/65 p-6">
             <p className="text-sm uppercase tracking-[0.3em] text-zinc-500">
               Game setup
             </p>
 
             <div className="mt-5 space-y-3">
-              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-black/55 px-4 py-3">
                 <span className="text-zinc-400">Length</span>
                 <span className="font-black text-lime-300">
                   {questionAmount} questions
                 </span>
               </div>
 
-              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-black/55 px-4 py-3">
                 <span className="text-zinc-400">Mode</span>
                 <span className="font-black text-lime-300">
                   {answerModeLabel}
                 </span>
               </div>
 
-              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-black/55 px-4 py-3">
                 <span className="text-zinc-400">Type</span>
                 <span className="font-black text-lime-300">
                   {questionTypeLabel}
                 </span>
               </div>
 
-              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+              <div className="flex justify-between rounded-2xl border border-zinc-800 bg-black/55 px-4 py-3">
                 <span className="text-zinc-400">Difficulty</span>
                 <span className="font-black text-lime-300">
                   {difficultyLabel}
@@ -649,7 +704,7 @@ export default function CustomMixPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-[2rem] border border-zinc-800 bg-black p-6">
+        <div className="mt-6 rounded-[2rem] border border-zinc-800 bg-black/65 p-6">
           <h2 className="text-2xl font-black">{t.smartReplayTitle}</h2>
 
           <p className="mt-3 leading-7 text-zinc-400">
@@ -674,9 +729,44 @@ export default function CustomMixPage() {
     );
   }
 
-    return (
-    <main className="min-h-screen overflow-hidden bg-black px-4 pb-32 pt-24 text-white md:px-8 md:pt-8">
-      <section className="mx-auto max-w-7xl">
+   return (
+  <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.22),transparent_30%),radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_30%),radial-gradient(circle_at_bottom,rgba(163,230,53,0.16),transparent_35%),linear-gradient(135deg,#070018,#0B1026_45%,#020617)] px-4 pb-32 pt-24 text-white md:px-8 md:pt-8">
+   <div className="pointer-events-none absolute inset-0 overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-br from-[#160020] via-[#07152f] to-[#020617]" />
+
+  <div className="absolute -left-32 -top-40 grid w-[150%] rotate-[-8deg] grid-cols-4 gap-5 opacity-70 md:grid-cols-6 lg:grid-cols-8">
+    {backgroundTiles.map((tile, index) => (
+      <div
+        key={index}
+        className={`relative h-40 overflow-hidden rounded-[1.5rem] border border-white/10 bg-cover bg-center shadow-2xl md:h-52 ${
+          index % 2 === 0 ? 'translate-y-10' : '-translate-y-4'
+        }`}
+        style={{
+          backgroundImage: tile.image
+            ? `linear-gradient(to bottom, rgba(0,0,0,0.04), rgba(0,0,0,0.32)), url(${tile.image})`
+            : tile.background,
+        }}
+      >
+        {!tile.image && (
+          <div className="flex h-full flex-col justify-between p-4">
+            <span className="text-5xl font-black text-white/85">
+              {tile.icon}
+            </span>
+
+            <span className="text-2xl font-black tracking-[0.18em] text-white/80">
+              {tile.label}
+            </span>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+
+  <div className="absolute inset-0 bg-gradient-to-r from-black/42 via-black/22 to-black/42" />
+  <div className="absolute inset-0 bg-gradient-to-b from-black/18 via-black/24 to-black/50" />
+  <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.20),transparent_35%),radial-gradient(circle_at_top_right,rgba(34,211,238,0.18),transparent_35%),radial-gradient(circle_at_bottom,rgba(163,230,53,0.16),transparent_42%)]" />
+</div>
+    <section className="relative mx-auto max-w-7xl">
         <div className="flex items-center justify-between gap-4">
           <a
             href="/"
@@ -698,7 +788,7 @@ export default function CustomMixPage() {
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <section className="rounded-[2.5rem] border border-zinc-800 bg-[radial-gradient(circle_at_top_left,rgba(163,230,53,0.13),transparent_35%),linear-gradient(135deg,#09090b,#000000)] p-5 shadow-[0_0_70px_rgba(132,204,22,0.08)] md:p-8">
+          <section className="rounded-[2.5rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(236,72,153,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_34%),rgba(9,9,17,0.72)] p-5 shadow-[0_0_90px_rgba(236,72,153,0.10)] backdrop-blur-xl md:p-8">
             {renderStepContent()}
 
             <div className="mt-10 flex flex-col gap-3 border-t border-zinc-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
@@ -735,7 +825,7 @@ export default function CustomMixPage() {
           </section>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-8 rounded-[2rem] border border-zinc-800 bg-zinc-950 p-6">
+            <div className="sticky top-8 rounded-[2rem] border border-white/10 bg-[#0b1026]/65 p-6 shadow-[0_0_70px_rgba(34,211,238,0.08)] backdrop-blur-xl">
               <p className="text-xs font-black uppercase tracking-[0.35em] text-lime-300">
                 Quiz setup
               </p>
@@ -743,33 +833,33 @@ export default function CustomMixPage() {
               <h2 className="mt-3 text-3xl font-black">Your challenge</h2>
 
               <div className="mt-6 space-y-3">
-                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                <div className="rounded-2xl border border-zinc-800 bg-black/65 p-4">
                   <p className="text-sm text-zinc-500">Artists</p>
                   <p className="mt-1 text-2xl font-black text-lime-300">
                     {selectedArtists.length}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                <div className="rounded-2xl border border-zinc-800 bg-black/65 p-4">
                   <p className="text-sm text-zinc-500">Length</p>
                   <p className="mt-1 text-xl font-black">
                     {questionAmount} questions
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                <div className="rounded-2xl border border-zinc-800 bg-black/65 p-4">
                   <p className="text-sm text-zinc-500">Mode</p>
                   <p className="mt-1 text-xl font-black">{answerModeLabel}</p>
                 </div>
 
-                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                <div className="rounded-2xl border border-zinc-800 bg-black/65 p-4">
                   <p className="text-sm text-zinc-500">Question type</p>
                   <p className="mt-1 text-xl font-black">
                     {questionTypeLabel}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-zinc-800 bg-black p-4">
+                <div className="rounded-2xl border border-zinc-800 bg-black/65 p-4">
                   <p className="text-sm text-zinc-500">Difficulty</p>
                   <p className="mt-1 text-xl font-black">{difficultyLabel}</p>
                 </div>
