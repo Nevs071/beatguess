@@ -250,7 +250,7 @@ useEffect(() => {
 }, []);
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-black px-4 py-6 text-white md:px-8">
+    <main className="relative min-h-screen overflow-x-hidden bg-black px-4 pb-28 pt-6 text-white md:px-8 md:pb-10">
  <div className="pointer-events-none absolute inset-0">
   {backgroundImage && (
     <>
@@ -279,7 +279,7 @@ useEffect(() => {
   <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_25%,rgba(163,230,53,0.16),transparent_35%)]" />
 </div>
 
-      <section className="relative mx-auto flex min-h-[calc(100vh-3rem)] max-w-7xl flex-col justify-center">
+      <section className="relative mx-auto flex max-w-7xl flex-col py-20 md:py-24 lg:min-h-[calc(100vh-3rem)] lg:justify-center">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-lime-400/40 bg-lime-400/10 px-4 py-2 text-sm font-black text-lime-300 shadow-[0_0_30px_rgba(132,204,22,0.15)]">
@@ -287,25 +287,25 @@ useEffect(() => {
               {text.heroLabel}
             </div>
 
-            <h1 className="mt-7 max-w-4xl text-5xl font-black leading-none tracking-tight md:text-7xl xl:text-8xl">
+            <h1 className="mt-6 max-w-4xl text-[3rem] font-black leading-[0.95] tracking-tight sm:text-6xl md:text-7xl xl:text-8xl">
               {text.heroTitle}
             </h1>
 
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-zinc-300 md:text-xl">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-300 md:mt-7 md:text-xl md:leading-8">
               {text.heroSubtitle}
             </p>
 
             <div className="mt-9 flex flex-col gap-4 sm:flex-row">
               <Link
                 href="/quiz/custom-mix"
-                className="group rounded-[1.5rem] bg-lime-400 px-9 py-5 text-center text-xl font-black text-black shadow-[0_0_40px_rgba(132,204,22,0.35)] transition hover:scale-[1.02] hover:bg-lime-300"
+                className="group w-full rounded-[1.5rem] bg-lime-400 px-7 py-5 text-center text-lg font-black text-black shadow-[0_0_40px_rgba(132,204,22,0.35)] transition hover:scale-[1.02] hover:bg-lime-300 sm:w-auto sm:px-9 sm:text-xl"
               >
                 ▶ {text.playNow}
               </Link>
 
               <Link
                 href="/scores"
-                className="rounded-[1.5rem] border border-zinc-700 bg-black/60 px-9 py-5 text-center text-xl font-black text-white transition hover:border-lime-400 hover:text-lime-300"
+               className="w-full rounded-[1.5rem] border border-zinc-700 bg-black/60 px-7 py-5 text-center text-lg font-black text-white transition hover:border-lime-400 hover:text-lime-300 sm:w-auto sm:px-9 sm:text-xl"
               >
                 🏆 {text.scoreButton}
               </Link>
@@ -324,7 +324,7 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative hidden md:block">
             <div className="absolute inset-0 rounded-[2.5rem] bg-lime-400/20 blur-[80px]" />
 
             <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-black/55 p-6 shadow-2xl backdrop-blur-xl">
@@ -337,6 +337,28 @@ useEffect(() => {
                     Live quiz
                   </div>
                 </div>
+                <div className="mt-6 rounded-[1.5rem] border border-lime-400/20 bg-black/55 p-4 backdrop-blur-xl md:hidden">
+  <p className="text-xs font-black uppercase tracking-[0.3em] text-lime-300">
+    BeatGuess
+  </p>
+
+  <div className="mt-4 grid grid-cols-3 gap-3">
+    <div className="rounded-2xl border border-zinc-800 bg-black/70 p-3 text-center">
+      <p className="text-2xl">🎧</p>
+      <p className="mt-1 text-xs font-bold text-zinc-300">Listen</p>
+    </div>
+
+    <div className="rounded-2xl border border-zinc-800 bg-black/70 p-3 text-center">
+      <p className="text-2xl">🎯</p>
+      <p className="mt-1 text-xs font-bold text-zinc-300">Guess</p>
+    </div>
+
+    <div className="rounded-2xl border border-zinc-800 bg-black/70 p-3 text-center">
+      <p className="text-2xl">🏆</p>
+      <p className="mt-1 text-xs font-bold text-zinc-300">Score</p>
+    </div>
+  </div>
+</div>
 
                 <div className="mt-6 grid grid-cols-[0.8fr_1.2fr] gap-4">
                   <div className="aspect-square rounded-[1.5rem] border border-zinc-800 bg-[radial-gradient(circle_at_30%_30%,rgba(163,230,53,0.35),transparent_35%),linear-gradient(135deg,#18181b,#000)] p-4">
