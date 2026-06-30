@@ -503,85 +503,125 @@ const timeoutQuestionIdRef = useRef<string | null>(null);
     }`;
   }, [currentQuestionIndex, questions.length]);
 
-  useEffect(() => {
-    async function loadQuiz() {
-      if (!artistIdsParam) {
-        setHasError(true);
-        setIsLoading(false);
+ useEffect(() => {
+  async function loadQuiz() {
+    setIsLoading(true);
+    setHasError(false);
+
+    try {
+      clearNextQuestionTimeout();
+      timeoutQuestionIdRef.current = null;
+      resultSavedRef.current = false;
+
+      setQuestions([]);
+      setCurrentQuestionIndex(0);
+      setSelectedTrackId(null);
+      setScore(0);
+      setCorrectAnswers(0);
+      setAnswerResults([]);
+      setAudioCurrentTime(0);
+      setAudioDuration(0);
+      setIsAudioPlaying(false);
+      setTypedAnswer("");
+      setTypedAnswerStatus(null);
+
+      if (challengeRoomParam) {
+        const roomResponse = await fetch(`/api/challenges/${challengeRoomParam}`, {
+          cache: "no-store",
+        });
+
+        if (!roomResponse.ok) {
+          const errorText = await roomResponse.text();
+          throw new Error(errorText || "Could not load challenge room.");
+        }
+
+        const roomData = await roomResponse.json();
+
+        const fixedQuizPayload =
+          roomData.room?.quiz_payload ?? roomData.room?.quizPayload;
+
+        const fixedQuestions = Array.isArray(fixedQuizPayload)
+          ? fixedQuizPayload
+          : fixedQuizPayload?.questions;
+
+        if (!Array.isArray(fixedQuestions) || fixedQuestions.length === 0) {
+          console.error("Challenge room has no saved questions:", roomData);
+          throw new Error("This challenge room has no saved questions.");
+        }
+
+        setQuestions(fixedQuestions);
         return;
       }
 
-      setIsLoading(true);
-      setHasError(false);
-
-      try {
-        const artistIds = artistIdsParam
-          .split(",")
-          .map((id) => Number(id))
-          .filter(Boolean);
-
-        const playedTrackSegments = readPlayedTrackSegments();
-
-        const response = await fetch(`${API_BASE_URL}/quiz/generate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            artistIds,
-            amount: questionAmount,
-            difficulty,
-            playedTrackSegments,
-          }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Could not generate quiz");
-        }
-
-        const generatedQuestions: QuizQuestion[] = await response.json();
-
-        const updatedPlayedTrackSegments: PlayedTrackSegments = {
-          ...playedTrackSegments,
-        };
-
-        generatedQuestions.forEach((question) => {
-          const trackId = String(question.correctTrackId);
-          const previousSegments = updatedPlayedTrackSegments[trackId] ?? [];
-
-          updatedPlayedTrackSegments[trackId] = Array.from(
-            new Set([...previousSegments, question.previewStartSeconds ?? 0]),
-          );
-        });
-
-        const limitedHistory = Object.fromEntries(
-          Object.entries(updatedPlayedTrackSegments).slice(-500),
-        );
-
-        savePlayedTrackSegments(limitedHistory);
-resultSavedRef.current = false;
-clearNextQuestionTimeout();
-timeoutQuestionIdRef.current = null;
-setQuestions(generatedQuestions);
-        setCurrentQuestionIndex(0);
-        setSelectedTrackId(null);
-        setScore(0);
-        setCorrectAnswers(0);
-        setAnswerResults([]);
-        setAudioCurrentTime(0);
-        setAudioDuration(0);
-        setIsAudioPlaying(false);
-        setTypedAnswer("");
-        setTypedAnswerStatus(null);
-      } catch {
-        setHasError(true);
-      } finally {
-        setIsLoading(false);
+      if (!artistIdsParam) {
+        throw new Error("No artist selected.");
       }
-    }
 
-    loadQuiz();
-  }, [artistIdsParam, difficulty, questionAmount, answerMode, typedAnswerKind]);
+      const artistIds = artistIdsParam
+        .split(",")
+        .map((id) => Number(id))
+        .filter(Boolean);
+
+      const playedTrackSegments = readPlayedTrackSegments();
+
+      const response = await fetch(`${API_BASE_URL}/quiz/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          artistIds,
+          amount: questionAmount,
+          difficulty,
+          answerMode,
+          typedAnswerKind,
+          playedTrackSegments,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Could not generate quiz");
+      }
+
+      const generatedQuestions: QuizQuestion[] = await response.json();
+
+      const updatedPlayedTrackSegments: PlayedTrackSegments = {
+        ...playedTrackSegments,
+      };
+
+      generatedQuestions.forEach((question) => {
+        const trackId = String(question.correctTrackId);
+        const previousSegments = updatedPlayedTrackSegments[trackId] ?? [];
+
+        updatedPlayedTrackSegments[trackId] = Array.from(
+          new Set([...previousSegments, question.previewStartSeconds ?? 0]),
+        );
+      });
+
+      const limitedHistory = Object.fromEntries(
+        Object.entries(updatedPlayedTrackSegments).slice(-500),
+      );
+
+      savePlayedTrackSegments(limitedHistory);
+      setQuestions(generatedQuestions);
+    } catch (caughtError) {
+      console.error("Quiz loading failed:", caughtError);
+      setHasError(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  void loadQuiz();
+}, [
+  artistIdsParam,
+  challengeRoomParam,
+  difficulty,
+  questionAmount,
+  answerMode,
+  typedAnswerKind,
+]);
+   
   useEffect(() => {
   if (!isFinished || questions.length === 0 || resultSavedRef.current) {
     return;

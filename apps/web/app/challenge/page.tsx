@@ -27,9 +27,9 @@ export default function ChallengePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
-  const [createdRoomCode, setCreatedRoomCode] = useState('');const router = useRouter();
+ const [createdRoomCode, setCreatedRoomCode] = useState('');
+const router = useRouter();
 const [joinRoomCode, setJoinRoomCode] = useState('');
-
 
   const createdLink =
     typeof window !== 'undefined' && createdRoomCode
@@ -49,20 +49,21 @@ const [joinRoomCode, setJoinRoomCode] = useState('');
       const response = await fetch(
         `${API_BASE_URL}/music/artists/search?query=${encodeURIComponent(query.trim())}`,
       );
-
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
+if (!response.ok) {
+  const errorText = await response.text();
+  throw new Error(errorText || 'Challenge creation failed');
+}
 
       const data = await response.json();
       setArtists(data.artists ?? data ?? []);
-    } catch {
-      setError('Could not search artists.');
-    } finally {
+    }catch (error) {
+  console.error(error);
+  setError(error instanceof Error ? error.message : 'Challenge creation failed');
+} finally {
       setIsSearching(false);
     }
   }
-  function joinRoom() {
+ function joinRoom() {
   const cleanRoomCode = joinRoomCode.trim().toUpperCase();
 
   if (cleanRoomCode.length < 4) {
@@ -72,6 +73,8 @@ const [joinRoomCode, setJoinRoomCode] = useState('');
 
   router.push(`/challenge/${cleanRoomCode}`);
 }
+
+
 
   function addArtist(artist: Artist) {
     setSelectedArtists((currentArtists) => {
@@ -88,47 +91,114 @@ const [joinRoomCode, setJoinRoomCode] = useState('');
       currentArtists.filter((artist) => artist.id !== artistId),
     );
   }
+async function createChallenge() {
+  if (selectedArtists.length === 0) {
+    setError('Select at least one artist.');
+    return;
+  }
 
-  async function createChallenge() {
-    if (selectedArtists.length === 0) {
-      setError('Select at least one artist.');
-      return;
+  setIsCreating(true);
+  setError('');
+
+  try {
+    const quizResponse = await fetch(`${API_BASE_URL}/quiz/generate`, {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        artistIds: selectedArtists.map((artist) => artist.id),
+        difficulty,
+        amount: questionAmount,
+        answerMode,
+        typedAnswerKind,
+      }),
+    });
+
+    if (!quizResponse.ok) {
+      const errorText = await quizResponse.text();
+      throw new Error(errorText || 'Could not generate challenge quiz.');
     }
 
-    setIsCreating(true);
-    setError('');
-    setCreatedRoomCode('');
+    const quizPayload = await quizResponse.json();
+
+    const response = await fetch('/api/challenges', {
+      method: 'POST',
+      cache: 'no-store',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        artistIds: selectedArtists.map((artist) => String(artist.id)),
+        difficulty,
+        questionAmount,
+        answerMode,
+        typedAnswerKind,
+        quizPayload,
+      }),
+    });
+
+    const responseText = await response.text();
+
+    type ChallengeCreateResponse = {
+      challenge?: {
+        room_code?: string;
+        roomCode?: string;
+      };
+      room_code?: string;
+      roomCode?: string;
+      error?: string;
+      message?: string;
+    };
+
+    let data: ChallengeCreateResponse = {};
 
     try {
-      const response = await fetch('/api/challenges', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          artistIds: selectedArtists.map((artist) => String(artist.id)),
-          difficulty,
-          questionAmount,
-          answerMode,
-          typedAnswerKind,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Challenge creation failed');
-      }
-
-      setCreatedRoomCode(data.challenge.room_code);
-    } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : 'Could not create challenge.',
-      );
-    } finally {
-      setIsCreating(false);
+      data = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      throw new Error(responseText || 'Challenge creation failed');
     }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ??
+          data.message ??
+          JSON.stringify(data) ??
+          'Challenge creation failed',
+      );
+    }
+
+    const roomCode =
+      data.challenge?.room_code ??
+      data.challenge?.roomCode ??
+      data.room_code ??
+      data.roomCode;
+
+    if (!roomCode) {
+      console.error('Challenge created but no room code returned:', data);
+      throw new Error('Room created but no room code returned.');
+    }
+
+    setCreatedRoomCode(roomCode);
+    setError('');
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  } catch (caughtError) {
+    console.error('Create challenge failed:', caughtError);
+
+    setError(
+      caughtError instanceof Error
+        ? caughtError.message
+        : 'Could not create challenge.',
+    );
+  } finally {
+    setIsCreating(false);
   }
+}
 
   async function copyChallengeLink() {
     if (!createdLink) return;
@@ -141,6 +211,43 @@ const [joinRoomCode, setJoinRoomCode] = useState('');
         <a href="/" className="text-sm font-bold text-lime-300 hover:text-lime-200">
           ← Back home
         </a>
+
+        {createdRoomCode && (
+  <div className="mb-8 rounded-[2rem] border border-lime-400/40 bg-lime-400/10 p-6 shadow-[0_0_60px_rgba(163,230,53,0.18)]">
+    <p className="text-sm font-black uppercase tracking-[0.3em] text-lime-300">
+      Room created
+    </p>
+
+    <h2 className="mt-3 text-5xl font-black tracking-[0.25em] text-white">
+      {createdRoomCode}
+    </h2>
+
+    <p className="mt-3 text-zinc-400">
+      Share this code or copy the invite link. Everyone in this room will play the same quiz.
+    </p>
+
+    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <a
+        href={`/challenge/${createdRoomCode}`}
+        className="rounded-full bg-lime-400 px-7 py-4 text-center font-black text-black transition hover:bg-lime-300"
+      >
+        Open room
+      </a>
+
+      <button
+        type="button"
+        onClick={() => {
+          navigator.clipboard.writeText(
+            `${window.location.origin}/challenge/${createdRoomCode}`,
+          );
+        }}
+        className="rounded-full border border-cyan-400/50 bg-cyan-400/10 px-7 py-4 text-center font-black text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/20"
+      >
+        Copy invite link
+      </button>
+    </div>
+  </div>
+)}
 
         <div className="mt-10 rounded-[2.5rem] border border-white/10 bg-black/45 p-6 shadow-[0_0_100px_rgba(34,211,238,0.10)] backdrop-blur-xl md:p-8">
           <p className="text-sm font-black uppercase tracking-[0.3em] text-lime-300">

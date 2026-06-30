@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 
 export type CreateChallengeInput = {
@@ -10,6 +10,7 @@ export type CreateChallengeInput = {
   questionAmount: number;
   answerMode: string;
   typedAnswerKind?: string;
+  quizPayload: unknown;
 };
 
 export type CreateChallengeScoreInput = {
@@ -40,48 +41,63 @@ export class ChallengesService {
   }
 
   async createChallenge(input: CreateChallengeInput) {
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      const roomCode = this.generateRoomCode();
+  await this.databaseService.query(`
+    alter table challenge_rooms
+    add column if not exists quiz_payload jsonb
+  `);
 
-      try {
-        const result = await this.databaseService.query(
-          `
-            insert into challenge_rooms (
-              room_code,
-              created_by_auth0_sub,
-              created_by_name,
-              created_by_email,
-              artist_ids,
-              difficulty,
-              question_amount,
-              answer_mode,
-              typed_answer_kind
-            )
-            values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            returning *
-          `,
-          [
-            roomCode,
-            input.auth0Sub,
-            input.playerName ?? null,
-            input.playerEmail ?? null,
-            input.artistIds,
-            input.difficulty,
-            input.questionAmount,
-            input.answerMode,
-            input.typedAnswerKind ?? null,
-          ],
-        );
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const roomCode = this.generateRoomCode();
 
-        return result.rows[0];
-      } catch (error) {
-        if (attempt === 4) {
-          throw error;
-        }
+    try {
+      const result = await this.databaseService.query(
+        `
+          insert into challenge_rooms (
+            room_code,
+            created_by_auth0_sub,
+            created_by_name,
+            created_by_email,
+            artist_ids,
+            difficulty,
+            question_amount,
+            answer_mode,
+            typed_answer_kind,
+            quiz_payload
+          )
+          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
+          returning *
+        `,
+        [
+          roomCode,
+          input.auth0Sub,
+          input.playerName ?? null,
+          input.playerEmail ?? null,
+          input.artistIds,
+          input.difficulty,
+          input.questionAmount,
+          input.answerMode,
+          input.typedAnswerKind ?? null,
+          JSON.stringify(input.quizPayload),
+        ],
+      );
+
+      return result.rows[0];
+    } catch (error) {
+      console.error('Create challenge database error:', error);
+
+      if (attempt === 4) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Unknown challenge database error';
+
+        throw new InternalServerErrorException(message);
       }
     }
   }
 
+  throw new InternalServerErrorException('Could not create challenge room.');
+}
   async getChallenge(roomCode: string) {
     const roomResult = await this.databaseService.query(
       `

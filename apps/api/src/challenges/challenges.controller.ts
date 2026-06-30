@@ -56,6 +56,9 @@ export class ChallengesController {
     if (!body.answerMode || typeof body.answerMode !== 'string') {
       throw new BadRequestException('answerMode is required');
     }
+    if (body.quizPayload == null) {
+  throw new BadRequestException('quizPayload is required');
+}
 
     const challenge = await this.challengesService.createChallenge({
       auth0Sub: body.auth0Sub,
@@ -73,6 +76,7 @@ export class ChallengesController {
         typeof body.typedAnswerKind === 'string'
           ? body.typedAnswerKind
           : undefined,
+          quizPayload: body.quizPayload,
     });
 
     return { challenge };
