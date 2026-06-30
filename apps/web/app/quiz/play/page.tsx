@@ -391,6 +391,7 @@ function QuizPlayContent() {
 
   const artistIdsParam = searchParams.get("artists");
   const difficultyParam = searchParams.get("difficulty");
+
   const amountParam = searchParams.get("amount");
   const challengeRoomParam = searchParams.get("challengeRoom");
   const answerModeParam = searchParams.get("answerMode");
@@ -670,6 +671,7 @@ void saveChallengeScore();
   answerMode,
   typedAnswerKind,
   artistIdsParam,
+  challengeRoomParam,
 ]);
 
 
@@ -1033,27 +1035,45 @@ timeoutQuestionIdRef.current = null;
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <a
-              href="/quiz/custom-mix"
-              className="rounded-full bg-lime-400 px-7 py-4 text-center font-black text-black shadow-[0_0_40px_rgba(163,230,53,0.25)] transition hover:scale-[1.02] hover:bg-lime-300"
-            >
-              {t.playAnother}
-            </a>
+  {challengeRoomParam ? (
+    <a
+      href={`/challenge/${challengeRoomParam}`}
+      className="rounded-full bg-cyan-300 px-7 py-4 text-center font-black text-black shadow-[0_0_40px_rgba(34,211,238,0.25)] transition hover:scale-[1.02] hover:bg-cyan-200"
+    >
+      🏁 View room leaderboard
+    </a>
+  ) : (
+    <a
+      href="/quiz/custom-mix"
+      className="rounded-full bg-lime-400 px-7 py-4 text-center font-black text-black shadow-[0_0_40px_rgba(163,230,53,0.25)] transition hover:scale-[1.02] hover:bg-lime-300"
+    >
+      {t.playAnother}
+    </a>
+  )}
 
-            <a
-              href="/scores"
-              className="rounded-full border border-cyan-400/50 bg-cyan-400/10 px-7 py-4 text-center font-black text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/20"
-            >
-              {getScoresText(language)}
-            </a>
+  {challengeRoomParam ? (
+    <a
+      href={`/challenge/${challengeRoomParam}`}
+      className="rounded-full border border-lime-400/50 bg-lime-400/10 px-7 py-4 text-center font-black text-lime-200 transition hover:border-lime-300 hover:bg-lime-400/20"
+    >
+      Play again in this room
+    </a>
+  ) : (
+    <a
+      href="/scores"
+      className="rounded-full border border-cyan-400/50 bg-cyan-400/10 px-7 py-4 text-center font-black text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/20"
+    >
+      {getScoresText(language)}
+    </a>
+  )}
 
-            <a
-              href="/"
-              className="rounded-full border border-white/10 bg-white/5 px-7 py-4 text-center font-black text-white transition hover:border-lime-400 hover:text-lime-300"
-            >
-              {t.backHome}
-            </a>
-          </div>
+  <a
+    href="/"
+    className="rounded-full border border-white/10 bg-white/5 px-7 py-4 text-center font-black text-white transition hover:border-lime-400 hover:text-lime-300"
+  >
+    {t.backHome}
+  </a>
+</div>
         </div>
       </section>
     </main>
