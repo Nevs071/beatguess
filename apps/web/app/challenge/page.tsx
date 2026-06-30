@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/lib/api';
+
 
 type Artist = {
   id: number;
@@ -25,7 +27,9 @@ export default function ChallengePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState('');
-  const [createdRoomCode, setCreatedRoomCode] = useState('');
+  const [createdRoomCode, setCreatedRoomCode] = useState('');const router = useRouter();
+const [joinRoomCode, setJoinRoomCode] = useState('');
+
 
   const createdLink =
     typeof window !== 'undefined' && createdRoomCode
@@ -58,6 +62,16 @@ export default function ChallengePage() {
       setIsSearching(false);
     }
   }
+  function joinRoom() {
+  const cleanRoomCode = joinRoomCode.trim().toUpperCase();
+
+  if (cleanRoomCode.length < 4) {
+    setError('Enter a valid room code.');
+    return;
+  }
+
+  router.push(`/challenge/${cleanRoomCode}`);
+}
 
   function addArtist(artist: Artist) {
     setSelectedArtists((currentArtists) => {
@@ -141,6 +155,45 @@ export default function ChallengePage() {
             Pick artists and settings, then invite friends with a room link.
             Everyone plays the same challenge and competes on the room leaderboard.
           </p>
+          <div className="mt-10 rounded-[2rem] border border-cyan-400/25 bg-cyan-400/10 p-5 backdrop-blur-xl md:p-6">
+  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+    <div>
+      <p className="text-sm font-black uppercase tracking-[0.25em] text-cyan-200">
+        Join a room
+      </p>
+
+      <h2 className="mt-2 text-2xl font-black text-white">
+        Already have a challenge code?
+      </h2>
+
+      <p className="mt-2 text-sm text-zinc-400">
+        Enter the room code your friend shared with you.
+      </p>
+    </div>
+
+    <div className="flex w-full flex-col gap-3 sm:flex-row md:max-w-xl">
+      <input
+        value={joinRoomCode}
+        onChange={(event) => setJoinRoomCode(event.target.value.toUpperCase())}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            joinRoom();
+          }
+        }}
+        placeholder="WQUD27"
+        className="min-w-0 flex-1 rounded-full border border-white/10 bg-black/45 px-5 py-3 font-black uppercase tracking-[0.2em] text-white outline-none transition placeholder:text-zinc-600 focus:border-cyan-300"
+      />
+
+      <button
+        type="button"
+        onClick={joinRoom}
+        className="rounded-full bg-cyan-300 px-6 py-3 font-black text-black transition hover:bg-cyan-200"
+      >
+        Join room
+      </button>
+    </div>
+  </div>
+</div>
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-5">
