@@ -98,6 +98,7 @@ const homeGameText: Record<
   {
     playNow: string;
     scoreButton: string;
+    challengeButton: string;
     heroLabel: string;
     heroTitle: string;
     heroSubtitle: string;
@@ -130,6 +131,8 @@ const homeGameText: Record<
   en: {
     playNow: "Start playing",
     scoreButton: "View scores",
+    challengeButton: "Multiplayer Challenge",
+    
     heroLabel: "Music quiz arena",
     heroTitle: "Guess the beat. Build your challenge. Beat your score.",
     heroSubtitle:
@@ -162,6 +165,7 @@ const homeGameText: Record<
   fr: {
     playNow: "Commencer à jouer",
     scoreButton: "Voir les scores",
+    challengeButton: "Défi multijoueur",
     heroLabel: "Arène de quiz musical",
     heroTitle: "Devine le son. Crée ton défi. Bats ton score.",
     heroSubtitle:
@@ -194,6 +198,7 @@ const homeGameText: Record<
   de: {
     playNow: "Jetzt spielen",
     scoreButton: "Punkte ansehen",
+    challengeButton: "Multiplayer-Challenge",
     heroLabel: "Musikquiz-Arena",
     heroTitle: "Errate den Beat. Baue deine Challenge. Schlage deinen Score.",
     heroSubtitle:
@@ -346,21 +351,28 @@ export default function HomePage() {
               {text.heroSubtitle}
             </p>
 
-            <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-              <Link
-                href="/quiz/custom-mix"
-                className="group w-full rounded-[1.5rem] bg-lime-400 px-7 py-5 text-center text-lg font-black text-black shadow-[0_0_40px_rgba(132,204,22,0.35)] transition hover:scale-[1.02] hover:bg-lime-300 sm:w-auto sm:px-9 sm:text-xl"
-              >
-                ▶ {text.playNow}
-              </Link>
+            <div className="mt-9 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+  <Link
+    href="/quiz/custom-mix"
+    className="group w-full rounded-[1.5rem] bg-lime-400 px-7 py-5 text-center text-lg font-black text-black shadow-[0_0_40px_rgba(132,204,22,0.35)] transition hover:scale-[1.02] hover:bg-lime-300 sm:w-auto sm:px-9 sm:text-xl"
+  >
+    ▶ {text.playNow}
+  </Link>
 
-              <Link
-                href="/scores"
-                className="w-full rounded-[1.5rem] border border-zinc-700 bg-black/60 px-7 py-5 text-center text-lg font-black text-white transition hover:border-lime-400 hover:text-lime-300 sm:w-auto sm:px-9 sm:text-xl"
-              >
-                🏆 {text.scoreButton}
-              </Link>
-            </div>
+  <Link
+    href="/challenge"
+    className="w-full rounded-[1.5rem] border border-cyan-400/40 bg-cyan-400/10 px-7 py-5 text-center text-lg font-black text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/20 sm:w-auto sm:px-9 sm:text-xl"
+  >
+    👥 {text.challengeButton}
+  </Link>
+
+  <Link
+    href="/scores"
+    className="w-full rounded-[1.5rem] border border-zinc-700 bg-black/60 px-7 py-5 text-center text-lg font-black text-white transition hover:border-lime-400 hover:text-lime-300 sm:w-auto sm:px-9 sm:text-xl"
+  >
+    🏆 {text.scoreButton}
+  </Link>
+</div>
 
             <div className="mt-7 inline-flex rounded-2xl border border-zinc-800 bg-black/50 backdrop-blur-xl px-5 py-3 text-sm text-zinc-400">
               {isCheckingBackend ? (
