@@ -13,15 +13,11 @@ export class MusicController {
   constructor(private readonly musicService: MusicService) {}
 
   @Get('artists/search')
-  searchArtists(@Query('q') query: string) {
-    if (!query || query.trim().length < 2) {
-      throw new BadRequestException(
-        'Search query must contain at least 2 characters',
-      );
-    }
+async searchArtists(@Query('query') query?: string, @Query('q') q?: string) {
+  const searchQuery = query ?? q ?? '';
 
-    return this.musicService.searchArtists(query.trim());
-  }
+  return this.musicService.searchArtists(searchQuery);
+}
 
   @Get('artists/:artistId/tracks')
   getArtistTopTracks(@Param('artistId', ParseIntPipe) artistId: number) {

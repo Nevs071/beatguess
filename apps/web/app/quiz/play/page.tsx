@@ -392,6 +392,7 @@ function QuizPlayContent() {
   const artistIdsParam = searchParams.get("artists");
   const difficultyParam = searchParams.get("difficulty");
   const amountParam = searchParams.get("amount");
+  const challengeRoomParam = searchParams.get("challengeRoom");
   const answerModeParam = searchParams.get("answerMode");
   const typedAnswerKindParam = searchParams.get("typedAnswerKind");
 
@@ -629,6 +630,33 @@ setQuestions(generatedQuestions);
   }
 
   void saveOnlineScore();
+
+async function saveChallengeScore() {
+  if (!challengeRoomParam) {
+    return;
+  }
+
+  try {
+    await fetch(`/api/challenges/${challengeRoomParam}/scores`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        score,
+        correctAnswers,
+        totalQuestions,
+        accuracy,
+      }),
+    });
+  } catch {
+    // Challenge score saving should not break the result screen.
+  }
+}
+
+void saveChallengeScore();
+
+
 }, [
   isFinished,
   questions.length,
@@ -643,6 +671,8 @@ setQuestions(generatedQuestions);
   typedAnswerKind,
   artistIdsParam,
 ]);
+
+
 
 
   function getNoAnswerText(language: Language) {

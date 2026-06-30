@@ -6,6 +6,7 @@ import { MusicModule } from './music/music.module';
 import { QuizModule } from './quiz/quiz.module';
 import { DatabaseModule } from './database/database.module';
 import { ScoresModule } from './scores/scores.module';
+import { ChallengesModule } from './challenges/challenges.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ScoresModule } from './scores/scores.module';
     MusicModule,
     QuizModule,
     ScoresModule,
+    ChallengesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
