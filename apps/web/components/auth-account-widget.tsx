@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/lib/use-language';
@@ -70,30 +70,35 @@ export function AuthAccountWidget() {
   }
 
   return (
-    <div className="fixed bottom-20 right-4 z-50 flex max-w-[260px] items-center gap-3 rounded-full border border-white/10 bg-black/85 px-4 py-3 text-white shadow-2xl backdrop-blur-xl">
-      {user.picture ? (
-        <img
-          src={user.picture}
-          alt={user.name ?? user.email ?? text.account}
-          className="h-9 w-9 rounded-full object-cover"
-        />
-      ) : (
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lime-400 text-sm font-black text-black">
-          U
-        </div>
-      )}
+    <div className="fixed bottom-20 right-4 z-50 flex max-w-[280px] items-center gap-3 rounded-full border border-white/10 bg-black/85 px-4 py-3 text-white shadow-2xl backdrop-blur-xl">
+      <a href="/account" className="shrink-0">
+        {user.picture ? (
+          <img
+            src={user.picture}
+            alt={user.name ?? user.email ?? text.account}
+            className="h-9 w-9 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-lime-400 text-sm font-black text-black">
+            U
+          </div>
+        )}
+      </a>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-black">
+        <a href="/account" className="block truncate text-sm font-black hover:text-lime-300">
           {user.name ?? user.email ?? text.account}
-        </p>
-
-        <a
-          href="/auth/logout"
-          className="text-xs font-bold text-zinc-400 hover:text-red-300"
-        >
-          {text.logout}
         </a>
+
+        <div className="flex items-center gap-2 text-xs font-bold text-zinc-400">
+          <a href="/account" className="hover:text-lime-300">
+            {text.account}
+          </a>
+          <span>·</span>
+          <a href="/auth/logout" className="hover:text-red-300">
+            {text.logout}
+          </a>
+        </div>
       </div>
     </div>
   );
