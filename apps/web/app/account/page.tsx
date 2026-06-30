@@ -120,6 +120,7 @@ const textByLanguage = {
     player: "Spieler",
   },
 } as const;
+type AccountText = (typeof textByLanguage)[keyof typeof textByLanguage];
 
 function AccountBackground() {
   return (
@@ -134,7 +135,7 @@ function AccountBackground() {
   );
 }
 
-function getDifficultyLabel(difficulty: string, text: (typeof textByLanguage)["en"]) {
+function getDifficultyLabel(difficulty: string, text: AccountText) {
   if (difficulty === "hard") {
     return text.hard;
   }
@@ -146,7 +147,7 @@ function getDifficultyLabel(difficulty: string, text: (typeof textByLanguage)["e
   return text.easy;
 }
 
-function getModeLabel(mode: string, text: (typeof textByLanguage)["en"]) {
+function getModeLabel(mode: string, text: AccountText) {
   if (mode === "typed") {
     return text.typed;
   }
@@ -174,7 +175,7 @@ function ScoreRow({
   index?: number;
   showPlayer?: boolean;
   language: "en" | "fr" | "de";
-  text: (typeof textByLanguage)["en"];
+ text: AccountText;
 }) {
   return (
     <div className="grid gap-4 rounded-3xl border border-white/10 bg-black/35 p-5 backdrop-blur-xl transition hover:bg-white/5 md:grid-cols-[0.35fr_1.2fr_0.7fr_0.8fr_0.8fr_0.9fr_0.9fr] md:items-center">
