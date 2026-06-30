@@ -581,33 +581,68 @@ setQuestions(generatedQuestions);
     loadQuiz();
   }, [artistIdsParam, difficulty, questionAmount, answerMode, typedAnswerKind]);
   useEffect(() => {
-    if (!isFinished || questions.length === 0 || resultSavedRef.current) {
-      return;
-    }
+  if (!isFinished || questions.length === 0 || resultSavedRef.current) {
+    return;
+  }
 
-    resultSavedRef.current = true;
+  resultSavedRef.current = true;
 
-    saveScoreHistoryItem({
-      id: crypto.randomUUID(),
-      playerName: player?.name ?? getGuestName(language),
-      score,
-      correctAnswers,
-      totalQuestions: questions.length,
-      accuracy,
-      difficulty,
-      rankTitle: resultRank.title,
-      createdAt: new Date().toISOString(),
-    });
-  }, [
-    isFinished,
-    questions.length,
-    player?.name,
+  const totalQuestions = questions.length;
+  const createdAt = new Date().toISOString();
+
+  saveScoreHistoryItem({
+    id: crypto.randomUUID(),
+    playerName: player?.name ?? getGuestName(language),
     score,
     correctAnswers,
+    totalQuestions,
     accuracy,
     difficulty,
-    resultRank.title,
-  ]);
+    rankTitle: resultRank.title,
+    createdAt,
+  });
+
+  async function saveOnlineScore() {
+    try {
+      await fetch('/api/scores', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          score,
+          correctAnswers,
+          totalQuestions,
+          accuracy,
+          difficulty,
+          answerMode,
+          typedAnswerKind,
+          artists: (artistIdsParam ?? '')
+            .split(',')
+            .map((artistId) => artistId.trim())
+            .filter(Boolean),
+        }),
+      });
+    } catch {
+      // Guest mode and offline play should never break the result screen.
+    }
+  }
+
+  void saveOnlineScore();
+}, [
+  isFinished,
+  questions.length,
+  player?.name,
+  language,
+  score,
+  correctAnswers,
+  accuracy,
+  difficulty,
+  resultRank.title,
+  answerMode,
+  typedAnswerKind,
+  artistIdsParam,
+]);
 
 
   function getNoAnswerText(language: Language) {
