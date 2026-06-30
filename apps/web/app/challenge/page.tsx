@@ -318,17 +318,35 @@ const [joinRoomCode, setJoinRoomCode] = useState('');
                   </select>
                 </label>
 
-                {answerMode === 'typed' && (
-                  <label className="grid gap-2">
-                    <span className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500">Typed question type</span>
-                    <select value={typedAnswerKind} onChange={(event) => setTypedAnswerKind(event.target.value as TypedAnswerKind)} className="rounded-2xl border border-white/10 bg-black/45 px-4 py-3 font-bold text-white">
-                      <option value="song">Song title</option>
-                      <option value="artist">Artist name</option>
-                      <option value="album">Album name</option>
-                      <option value="mixed">Mixed</option>
-                    </select>
-                  </label>
-                )}
+               <label className="grid gap-2">
+  <span className="text-sm font-black uppercase tracking-[0.2em] text-zinc-500">
+    Question type
+  </span>
+
+  <select
+    value={typedAnswerKind}
+    onChange={(event) =>
+      setTypedAnswerKind(event.target.value as TypedAnswerKind)
+    }
+    className="rounded-2xl border border-white/10 bg-black/45 px-4 py-3 font-bold text-white"
+  >
+    <option value="song">
+      {answerMode === 'typed' ? 'Type song title' : 'Choose song title'}
+    </option>
+
+    <option value="artist">
+      {answerMode === 'typed' ? 'Type artist name' : 'Choose artist name'}
+    </option>
+
+    <option value="album">
+      {answerMode === 'typed' ? 'Type album name' : 'Choose album name'}
+    </option>
+
+    <option value="mixed">
+      Mixed: song, artist, or album
+    </option>
+  </select>
+</label>
               </div>
 
               <button type="button" onClick={() => void createChallenge()} disabled={isCreating || selectedArtists.length === 0} className="mt-7 w-full rounded-full bg-lime-400 px-6 py-4 text-center text-lg font-black text-black transition hover:bg-lime-300 disabled:cursor-not-allowed disabled:opacity-50">
