@@ -7,6 +7,7 @@ import { QuizModule } from './quiz/quiz.module';
 import { DatabaseModule } from './database/database.module';
 import { ScoresModule } from './scores/scores.module';
 import { ChallengesModule } from './challenges/challenges.module';
+import { AnswerValidationModule } from './answer-validation/answer-validation.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ChallengesModule } from './challenges/challenges.module';
     QuizModule,
     ScoresModule,
     ChallengesModule,
+    AnswerValidationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

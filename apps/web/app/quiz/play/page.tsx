@@ -24,6 +24,16 @@ type QuizOption = {
   albumTitle: string;
 };
 
+
+type AnswerValidationResult = {
+  isCorrect: boolean;
+  confidence: number;
+  method: 'rules' | 'ai' | 'ai-disabled';
+  reason: string;
+  normalizedUserAnswer: string;
+  normalizedCorrectAnswer: string;
+};
+
 type QuizQuestion = {
   id: string;
   type: "guess_song_from_audio";
@@ -834,47 +844,81 @@ function failCurrentQuestionByTimeout() {
     }
     
   }
-  function submitTypedAnswer() {
-    if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
-      return;
+  async function submitTypedAnswer() {
+  if (!currentQuestion || !currentCorrectOption || selectedTrackId !== null) {
+    return;
+  }
+
+  const cleanTypedAnswer = typedAnswer.trim();
+
+  if (!cleanTypedAnswer) {
+    return;
+  }
+
+  if (!currentTypedCorrectAnswer) {
+    return;
+  }
+
+  let validationResult: AnswerValidationResult | null = null;
+
+  try {
+    const response = await fetch('/api/answer-validation/typed', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        answerKind: activeTypedAnswerKind,
+        correctAnswer: currentTypedCorrectAnswer,
+        userAnswer: cleanTypedAnswer,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Answer validation failed.');
     }
 
-    const cleanTypedAnswer = typedAnswer.trim();
+    validationResult = (await response.json()) as AnswerValidationResult;
+  } catch (error) {
+    console.error('Smart answer validation failed:', error);
 
-    if (!cleanTypedAnswer) {
-      return;
-    }
-
-    if (!currentTypedCorrectAnswer) {
-      return;
-    }
-
-    const isCorrect =
+    const fallbackIsCorrect =
       normalizeTypedAnswer(cleanTypedAnswer) ===
       normalizeTypedAnswer(currentTypedCorrectAnswer);
 
-    setSelectedTrackId(currentQuestion.correctTrackId);
-    setTypedAnswerStatus(isCorrect ? "correct" : "wrong");
-
-    setAnswerResults((currentResults) => [
-      ...currentResults,
-      {
-        questionId: currentQuestion.id,
-        selectedTitle: cleanTypedAnswer,
-        selectedArtistName: "",
-        correctTitle: currentCorrectOption.title,
-        correctArtistName: currentCorrectOption.artistName,
-        isCorrect,
-      },
-    ]);
-
-    if (isCorrect) {
-      setScore((currentScore) => currentScore + 100);
-      setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
-    }
-
+    validationResult = {
+      isCorrect: fallbackIsCorrect,
+      confidence: fallbackIsCorrect ? 1 : 0,
+      method: 'rules',
+      reason: 'Fallback exact validation was used.',
+      normalizedUserAnswer: normalizeTypedAnswer(cleanTypedAnswer),
+      normalizedCorrectAnswer: normalizeTypedAnswer(currentTypedCorrectAnswer),
+    };
   }
 
+  const isCorrect = validationResult.isCorrect;
+
+  setSelectedTrackId(currentQuestion.correctTrackId);
+  setTypedAnswerStatus(isCorrect ? 'correct' : 'wrong');
+
+  setAnswerResults((currentResults) => [
+    ...currentResults,
+    {
+      questionId: currentQuestion.id,
+      selectedTitle: cleanTypedAnswer,
+      selectedArtistName: '',
+      correctTitle: currentTypedCorrectAnswer,
+      correctArtistName:
+        activeTypedAnswerKind === 'artist' ? '' : currentQuestion.artistName,
+      isCorrect,
+    },
+  ]);
+
+  if (isCorrect) {
+    setScore((currentScore) => currentScore + 100);
+    setCorrectAnswers((currentCorrectAnswers) => currentCorrectAnswers + 1);
+  }
+}
   function nextQuestion() {
     clearNextQuestionTimeout();
 timeoutQuestionIdRef.current = null;
